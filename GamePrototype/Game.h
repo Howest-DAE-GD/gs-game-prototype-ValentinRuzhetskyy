@@ -3,10 +3,9 @@
 #include <utils.h>
 #include <iostream>
 #include "enemies.h"
-
 #include <vector>
-
 #include "RobotWorkPlace.h"
+#include "Player.h"
 class Game : public BaseGame
 {
 public:
@@ -29,6 +28,7 @@ public:
 	void ProcessMouseUpEvent( const SDL_MouseButtonEvent& e ) override;
 	void DrawGridView() const ;
 	void CheckPlacement(const Point2f& pos);
+	void SpawnEnemies();
 	int CreateRandomNumber(  int max);
 
 
@@ -39,21 +39,21 @@ private:
 	void ClearBackground( ) const;
 	
 
-	Point2f g_FactoryLocationOuterWall{GetViewPort().width/2,GetViewPort().height/2};
-	float	g_FactoryWidthOuterWall{300};
-	float	g_FactoryHeightOuterWall{300};
+	Point2f m_FactoryLocationOuterWall{GetViewPort().width/2,GetViewPort().height/2};
+	float	m_FactoryWidthOuterWall{300};
+	float	m_FactoryHeightOuterWall{300};
 	Point2f m_outerwallPosition{273.0f,100.0f};
 
-	Point2f g_FactoryLocationCamp{ (GetViewPort().width / 2) ,(GetViewPort().height / 2) };
-	float	g_FactoryWidthCamp{ 240 };
-	float	g_FactorHeightCamp{ 240 };
-	Rectf g_FactoryGround { g_FactoryLocationCamp.x - g_FactoryWidthCamp / 2, g_FactoryLocationCamp.y - g_FactorHeightCamp / 2, g_FactoryWidthCamp, g_FactorHeightCamp };
+	Point2f m_FactoryLocationCamp{ (GetViewPort().width / 2) ,(GetViewPort().height / 2) };
+	float	m_FactoryWidthCamp{ 240 };
+	float	m_FactorHeightCamp{ 240 };
+	Rectf m_FactoryGround { m_FactoryLocationCamp.x - m_FactoryWidthCamp / 2, m_FactoryLocationCamp.y - m_FactorHeightCamp / 2, m_FactoryWidthCamp, m_FactorHeightCamp };
 	std::vector<Point2f>VerticesOuterWall
 	{
 		Point2f{m_outerwallPosition.x,m_outerwallPosition.y},
-		Point2f{m_outerwallPosition.x+g_FactoryWidthOuterWall, m_outerwallPosition.y},
-		Point2f{m_outerwallPosition.x + g_FactoryWidthOuterWall,m_outerwallPosition.y+g_FactoryHeightOuterWall},
-		Point2f{m_outerwallPosition.x,m_outerwallPosition.y + g_FactoryHeightOuterWall},
+		Point2f{m_outerwallPosition.x+m_FactoryWidthOuterWall, m_outerwallPosition.y},
+		Point2f{m_outerwallPosition.x + m_FactoryWidthOuterWall,m_outerwallPosition.y+m_FactoryHeightOuterWall},
+		Point2f{m_outerwallPosition.x,m_outerwallPosition.y + m_FactoryHeightOuterWall},
 		Point2f{m_outerwallPosition.x,m_outerwallPosition.y}
 
 	};
@@ -69,16 +69,22 @@ private:
 		VerticesOuterWall,
 		ScreenBorder
 	};
+	std::vector<std::vector<Point2f>>m_EnemyVertices;
 
 	const int Rows{ 5 };
 	const int Collumns{ 7 };
+
 //	std::vector<RobotWorkPlace*> g_CapacityOfWorkSpaces[40]{};
-	RobotWorkPlace*g_PworkPlaces[40]{};
-	std::vector<enemies*> AmountofEnemies{10};
-	std::vector<Robot*>Robots[10]{};
+	RobotWorkPlace*m_PworkPlaces[40]{};
+	std::vector<enemies*> AmountofEnemies{1};
+	//std::vector<Robot*>Robots{};
+
 	enemies* enemy;
+
 	int TotalAmountRobots{0};
-	
+	int m_Amountworkplaces{0};
 
-
+	float timer{ 0 };
+	Player* Player1;
+	int id = AmountofEnemies.size();
 };

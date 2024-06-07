@@ -1,73 +1,195 @@
 #include "pch.h"
 #include "Robot.h"
+#include "enemies.h"
+#include "Bullet.h"
 
 Robot::Robot(Point2f Position) :
 	m_RobotPosition(Position),
-	counter{ 0 },
-	isEnemycloseBy{ false },
-	m_Height{20},
-	m_Width{20}
+	m_counter{ 0 },
+	m_isEnemycloseBy{ false },
+	m_Height{ 20 },
+	m_Width{ 20 },
+	m_coolDownDamage{ 0 },
+	m_Robothealth{ 4 },
+	m_isAlive{ true },
+	m_lastEnemyPosition{ Point2f{0.0f,0.0f} },
+	m_isBulletShot{ false },
+	m_bulletCooldown{ 0 },
+	m_damage(1)
 {
+	m_pBullet = new Bullet{ m_RobotPosition };
 }
 
 Robot::~Robot()
 {
+	
 }
 
-void Robot::IsEnemyWithinRange(Point2f enemyPos)
+void Robot::IsEnemyWithinRange(std::vector<enemies*> AmountofEnemies)
 {
-
-	if (abs(enemyPos.x-m_RobotPosition.x)<20.0f)
+	
+	/*for (int indexEnemies = 0; indexEnemies < AmountofEnemies.size(); indexEnemies++)
 	{
-		if (abs(enemyPos.y-m_RobotPosition.y)<20.0f)
+		if (abs(AmountofEnemies[indexEnemies]->GetPosition().x - m_RobotPosition.x) < 60.0f)
 		{
-			std::cout << abs(enemyPos.x - m_RobotPosition.x) << std::endl;
-			isEnemycloseBy = true;
-			if (enemyPos.x>m_RobotPosition.x)
+			if (abs(AmountofEnemies[indexEnemies]->GetPosition().y- m_RobotPosition.y) < 60.0f)
 			{
-				m_RobotPosition.x++;
-			}
-			else if (enemyPos.x>m_RobotPosition.x)
-			{
-				m_RobotPosition.x--;
-			}
+				m_isEnemycloseBy = true;
+				if (AmountofEnemies[indexEnemies]->GetPosition().x > m_RobotPosition.x)
+				{
+					m_RobotPosition.x += 3;
+				}
+				else if (AmountofEnemies[indexEnemies]->GetPosition().x > m_RobotPosition.x)
+				{
+					m_RobotPosition.x -= 3;
+				}
 
-			if (enemyPos.y > m_RobotPosition.y)
-			{
-				m_RobotPosition.x++;
-			}
-			else if (enemyPos.y > m_RobotPosition.y)
-			{
-				m_RobotPosition.x--;
+				if (AmountofEnemies[indexEnemies]->GetPosition().y > m_RobotPosition.y)
+				{
+					m_RobotPosition.y += 3;
+				}
+				else if (AmountofEnemies[indexEnemies]->GetPosition().y > m_RobotPosition.y)
+				{
+					m_RobotPosition.y -= 3;
+				}
 			}
 		}
-	}
-	else
+	*/	
+	/*for (int index = 0; index < EnemyVertices.size(); index++)
 	{
-		isEnemycloseBy = false;
-	}
+	
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x - 8, m_RobotPosition.y), Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y), Point2f(m_RobotPosition.x + m_Width + 8, m_RobotPosition.y), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x - 8, m_RobotPosition.y + m_Height), Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y + m_Height), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y + m_Height), Point2f(m_RobotPosition.x + m_Width + 8, m_RobotPosition.y + m_Height), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}	
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x, m_RobotPosition.y - 8), Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height / 2), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height / 2), Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height + 8), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y - 8), Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height / 2), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+		if (utils::Raycast(EnemyVertices[index], Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height / 2), Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height + 8), m_hitInfo))
+		{
+			std::cout << "colided" << std::endl;
+		}
+	}*/
+	for (int indexEnemy = 0; indexEnemy < AmountofEnemies.size(); indexEnemy++)
+	{
+		if (AmountofEnemies[indexEnemy] !=nullptr)
+		{
+			if (abs(AmountofEnemies[indexEnemy]->GetPosition().x - m_RobotPosition.x) <= 40 && abs(AmountofEnemies[indexEnemy]->GetPosition().y - m_RobotPosition.y) <= 40)
+			{
+				m_isCollided = true;
+			}
+			else if (abs(AmountofEnemies[indexEnemy]->GetPosition().x - m_RobotPosition.x) >= 40 && abs(AmountofEnemies[indexEnemy]->GetPosition().y - m_RobotPosition.y) >= 40)
+			{
+				m_isCollided = false;
+			}
 
+			if (abs(AmountofEnemies[indexEnemy]->GetPosition().x - m_pBullet->GetPosition().x) <= 1 && abs(AmountofEnemies[indexEnemy]->GetPosition().y - m_pBullet->GetPosition().y <= 1))
+			{
+				AmountofEnemies[indexEnemy]->Sethealth(m_damage);
+			}
+		}
+
+	}
+	
+	/*for (int  indexEnemy = 0; indexEnemy < AmountofEnemies.size(); indexEnemy++)
+	{
+		if (AmountofEnemies[indexEnemy] !=nullptr)
+		{
+			if (abs(AmountofEnemies[indexEnemy]->GetPosition().x - m_RobotPosition.x) <= 100 && abs(AmountofEnemies[indexEnemy]->GetPosition().y - m_RobotPosition.y) <= 100)
+			{
+
+				m_isEnemyWithinShootingRange = true;
+				if (m_isEnemyWithinShootingRange && m_bulletCooldown >= 70)
+				{
+					m_lastEnemyPosition.x = AmountofEnemies[indexEnemy]->GetPosition().x;
+					m_lastEnemyPosition.y = AmountofEnemies[indexEnemy]->GetPosition().y;
+					m_bulletCooldown = 0;
+				}
+			}
+			else if (abs(AmountofEnemies[indexEnemy]->GetPosition().x - m_RobotPosition.x) >= 100 && abs(AmountofEnemies[indexEnemy]->GetPosition().y - m_RobotPosition.y) >= 100)
+			{
+				m_isEnemyWithinShootingRange = false;
+			}
+			if (m_isEnemyWithinShootingRange && m_lastEnemyPosition.x != 0 && m_lastEnemyPosition.y != 0)
+			{
+				m_isBulletShot = true;
+				m_pBullet->BulletDirection(m_lastEnemyPosition);
+			}
+
+			if (m_isEnemyWithinShootingRange == false && m_bulletCooldown >= 70)
+			{
+				m_isBulletShot = false;
+				m_pBullet->SetPosition(m_RobotPosition);
+			}
+		}
+
+
+	}*/
+
+}
+
+int Robot::GetRobothealth()
+{
+	return m_Robothealth;
 }
 
 void Robot::Draw()
 {
-	utils::SetColor(Color4f(0.0f, 0.0f, 1.0f, 1.0f));
-	utils::FillRect(m_RobotPosition.x, m_RobotPosition.y, m_Width, m_Height);
+	if (m_isAlive)
+	{
+		utils::SetColor(Color4f(0.0f, 0.0f, 1.0f, 1.0f));
+		utils::FillRect(m_RobotPosition.x, m_RobotPosition.y, m_Width, m_Height);
+		if (m_isBulletShot)
+		{
+			m_pBullet->Display();
+		}
+	}
+
 
 }
 
 void Robot::Update()
 {
-	if (isEnemycloseBy==false)
+	if (m_bulletCooldown <= 200)
 	{
-		if (counter >= 50)
+		m_bulletCooldown += 1;
+	}
+
+	if (m_coolDownDamage<=70)
+	{
+		m_coolDownDamage+=1;
+	}
+	if (m_isEnemycloseBy==false)
+	{
+		if (m_counter >= 50)
 		{
 			m_RandomDirection = int(rand() % 8);
-			counter = 0;
+			m_counter = 0;
 		}
 		else
 		{
-			counter++;
+			m_counter++;
 		}
 
 		switch (m_RandomDirection)
@@ -145,112 +267,163 @@ void Robot::Update()
 
 		};
 	}
-
-
+	if (m_isCollided&&m_coolDownDamage>=70)
+	{
+		std::cout << "hit" << std::endl;
+		m_Robothealth -= 1;
+		m_coolDownDamage = 0;
+	}
+	if (m_Robothealth<=0)
+	{
+		m_isAlive = false;
+	}
 }
 
 void Robot::RayCast(const std::vector< std::vector<Point2f>>& AllVertices)
 {
-
-	for (int index{}; index < AllVertices.size(); ++index)
+	if (m_isWithinWalls==false)
 	{
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x - 8, m_RobotPosition.y), Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y), m_hitInfo))
+		for (int index{}; index < AllVertices.size(); ++index)
 		{
-			//std::cout << "hit1" << std::endl;
-			if (RobotDirection == Direction::left || RobotDirection == Direction::LeftUp || RobotDirection == Direction::LeftDown)
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x - 8, m_RobotPosition.y), Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y), m_hitInfo))
 			{
-				m_Speed = 0;
-				//	m_pos.x++;
-			}
+				//std::cout << "hit1" << std::endl;
+				if (RobotDirection == Direction::left || RobotDirection == Direction::LeftUp || RobotDirection == Direction::LeftDown)
+				{
+					m_Speed = 0;
+					//	m_pos.x++;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 
 
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y), Point2f(m_RobotPosition.x + m_Width + 8, m_RobotPosition.y), m_hitInfo))
-		{
-			//std::cout << "hit2" << std::endl;
-			if (RobotDirection == Direction::right || RobotDirection == Direction::RightDown || RobotDirection == Direction::RightUp)
-			{
-				//	m_pos.x--;
-				m_Speed = 0;
 			}
-			else
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y), Point2f(m_RobotPosition.x + m_Width + 8, m_RobotPosition.y), m_hitInfo))
 			{
-				m_Speed = 3;
+				//std::cout << "hit2" << std::endl;
+				if (RobotDirection == Direction::right || RobotDirection == Direction::RightDown || RobotDirection == Direction::RightUp)
+				{
+					//	m_pos.x--;
+					m_Speed = 0;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x - 8, m_RobotPosition.y + m_Height), Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y + m_Height), m_hitInfo))
-		{
-			//std::cout << "hit3" << std::endl;
-			if (RobotDirection == Direction::left || RobotDirection == Direction::LeftDown || RobotDirection == Direction::LeftUp)
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x - 8, m_RobotPosition.y + m_Height), Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y + m_Height), m_hitInfo))
 			{
-				m_Speed = 0;
-				//	m_pos.x++;
+				//std::cout << "hit3" << std::endl;
+				if (RobotDirection == Direction::left || RobotDirection == Direction::LeftDown || RobotDirection == Direction::LeftUp)
+				{
+					m_Speed = 0;
+					//	m_pos.x++;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
-			else
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y + m_Height), Point2f(m_RobotPosition.x + m_Width + 8, m_RobotPosition.y + m_Height), m_hitInfo))
 			{
-				m_Speed = 3;
+				//std::cout << "hit4" << std::endl;
+				if (RobotDirection == Direction::right || RobotDirection == Direction::RightUp || RobotDirection == Direction::RightDown)
+				{
+					//	m_pos.x--;
+					m_Speed = 0;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width / 2, m_RobotPosition.y + m_Height), Point2f(m_RobotPosition.x + m_Width + 8, m_RobotPosition.y + m_Height), m_hitInfo))
-		{
-			//std::cout << "hit4" << std::endl;
-			if (RobotDirection == Direction::right || RobotDirection == Direction::RightUp || RobotDirection == Direction::RightDown)
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x, m_RobotPosition.y - 8), Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height / 2), m_hitInfo))
 			{
-				//	m_pos.x--;
-				m_Speed = 0;
+				if (RobotDirection == Direction::down || RobotDirection == Direction::LeftDown || RobotDirection == Direction::RightDown)
+				{
+					//	 m_pos.y++;
+					m_Speed = 0;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
-			else
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height / 2), Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height + 8), m_hitInfo))
 			{
-				m_Speed = 3;
+				if (RobotDirection == Direction::up || RobotDirection == Direction::LeftUp || RobotDirection == Direction::RightUp)
+				{
+					// m_pos.y--;
+					m_Speed = 0;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x, m_RobotPosition.y - 8), Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height / 2), m_hitInfo))
-		{
-			if (RobotDirection == Direction::down || RobotDirection == Direction::LeftDown || RobotDirection == Direction::RightDown)
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y - 8), Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height / 2), m_hitInfo))
 			{
-				//	 m_pos.y++;
-				m_Speed = 0;
+				if (RobotDirection == Direction::down || RobotDirection == Direction::LeftDown || RobotDirection == Direction::RightDown)
+				{
+					//	 m_pos.y++;
+					m_Speed = 0;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
-			else
+			if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height / 2), Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height + 8), m_hitInfo))
 			{
-				m_Speed = 3;
-			}
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height / 2), Point2f(m_RobotPosition.x, m_RobotPosition.y + m_Height + 8), m_hitInfo))
-		{
-			if (RobotDirection == Direction::up || RobotDirection == Direction::LeftUp || RobotDirection == Direction::RightUp)
-			{
-				// m_pos.y--;
-				m_Speed = 0;
-			}
-			else
-			{
-				m_Speed = 3;
-			}
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y - 8), Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height / 2), m_hitInfo))
-		{
-			if (RobotDirection == Direction::down || RobotDirection == Direction::LeftDown || RobotDirection == Direction::RightDown)
-			{
-				//	 m_pos.y++;
-				m_Speed = 0;
-			}
-			else
-			{
-				m_Speed = 3;
-			}
-		}
-		if (utils::Raycast(AllVertices[index], Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height / 2), Point2f(m_RobotPosition.x + m_Width, m_RobotPosition.y + m_Height + 8), m_hitInfo))
-		{
-			if (RobotDirection == Direction::up || RobotDirection == Direction::LeftUp || RobotDirection == Direction::RightUp)
-			{
-				//	 m_pos.y--;
-				m_Speed = 0;
-			}
-			else
-			{
-				m_Speed = 3;
+				if (RobotDirection == Direction::up || RobotDirection == Direction::LeftUp || RobotDirection == Direction::RightUp)
+				{
+					//	 m_pos.y--;
+					m_Speed = 0;
+				}
+				else
+				{
+					m_Speed = 3;
+				}
 			}
 		}
 	}
+
+}
+
+void Robot::isWithinCastleWalls(float left, float bottom, float width, float heigth)
+{
+	if (this !=nullptr)
+	{
+		if (m_RobotPosition.x > left && m_RobotPosition.x < left + width&& m_RobotPosition.y > bottom && m_RobotPosition.y < bottom + heigth)
+		{
+			m_isWithinWalls = true;
+		}
+		else
+		{
+			m_isWithinWalls = false;
+		}
+	}
+
+}
+
+int Robot::GetId()
+{
+	return m_RobotID;
+}
+
+
+void Robot::Setid(int id)
+{
+	m_RobotID = id;
+}
+
+Point2f Robot::GetPosition()
+{
+	if (this!=nullptr)
+	{
+		return m_RobotPosition;
+	}
+
 }

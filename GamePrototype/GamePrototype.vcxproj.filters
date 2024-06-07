@@ -19,6 +19,9 @@
     <Filter Include="Source Files\MyClasses\Robot">
       <UniqueIdentifier>{fd7cee08-5e0c-4e0f-9367-119af8daa4df}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\MyClasses\Player">
+      <UniqueIdentifier>{76feed09-42d9-4c78-936f-88d61a4b5ecd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -40,7 +43,13 @@
       <Filter>Source Files\MyClasses\Robot</Filter>
     </ClCompile>
     <ClCompile Include="Bullet.cpp">
-      <Filter>Source Files\MyClasses\Robot</Filter>
+      <Filter>Source Files\MyClasses\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files\MyClasses\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="PowerUps.cpp">
+      <Filter>Source Files\MyClasses\Player</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,11 +65,17 @@
     <ClInclude Include="enemies.h">
       <Filter>Source Files\MyClasses</Filter>
     </ClInclude>
-    <ClInclude Include="Bullet.h">
-      <Filter>Source Files\MyClasses\Robot</Filter>
-    </ClInclude>
     <ClInclude Include="Robot.h">
       <Filter>Source Files\MyClasses\Robot</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Source Files\MyClasses\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Bullet.h">
+      <Filter>Source Files\MyClasses\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="PowerUps.h">
+      <Filter>Source Files\MyClasses\Player</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -10,11 +10,13 @@ Game::Game( const Window& window )
 Game::~Game( )
 {
 	Cleanup( );
+
 }
 
 void Game::Initialize( )
 {
-	for (int i = 0; i < 10; i++)
+	Player1 = new Player{ Point2f{20.0f,460.0f}, Point2f{300.0f,200.0f}, Point2f{650.0f,460.0f } };
+	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
 		AmountofEnemies[i] = new enemies{ 100.0f,10.0f };
 		AmountofEnemies[i]->setId(i);
@@ -23,42 +25,83 @@ void Game::Initialize( )
 
 void Game::Cleanup( )
 {
+	for (int i = 0; i < m_Amountworkplaces; i++)
+	{
+		delete	m_PworkPlaces[i];
+		m_PworkPlaces[i] = nullptr;
+	}
+
+	for (int i = 0; i < AmountofEnemies.size(); i++)
+	{
+
+		delete AmountofEnemies[i];
+		AmountofEnemies[i] = nullptr;
+	}
+	AmountofEnemies.clear();
 }
 
 void Game::Update( float elapsedSec )
 {
-	// Check keyboard state
-	//const Uint8 *pStates = SDL_GetKeyboardState( nullptr );
-	//if ( pStates[SDL_SCANCODE_RIGHT] )
-	//{
-	//	std::cout << "Right arrow key is down\n";
-	//}
-	//if ( pStates[SDL_SCANCODE_LEFT] && pStates[SDL_SCANCODE_UP])
-	//{
-	//	std::cout << "Left and up arrow keys are down\n";
-	//}
+	//std::cout << timer<<std::endl;
+	if (timer<3)
+	{
+		timer += elapsedSec;
+	}
+	else if (timer>3)
+	{
+		
+		SpawnEnemies();
+		timer = 0;
+	}
+	Player1->Update(elapsedSec);
 
 	for (int indexEnemies = 0; indexEnemies < AmountofEnemies.size(); indexEnemies++)
 	{
-		AmountofEnemies[indexEnemies]->Movement( elapsedSec);
+		AmountofEnemies[indexEnemies]->Update( elapsedSec);
+		AmountofEnemies[indexEnemies]->SetEnemyVertices(m_EnemyVertices);
 		AmountofEnemies[indexEnemies]->RayCast(Vertices);
-		for (int indexWorkplace = 0; indexWorkplace <40 ; indexWorkplace++)
+		if (AmountofEnemies[indexEnemies]->GetIsCollidedWithWall()==false)
 		{
-			if (g_PworkPlaces[indexWorkplace] != nullptr)
-			{
-				g_PworkPlaces[indexWorkplace]->SetEnemyPosition(AmountofEnemies[indexEnemies]->GetPosition());
-			}
-			else if (g_PworkPlaces[indexWorkplace] != nullptr)
-			{
-				std::cout << "nullptr" << std::endl;
-			}
+			AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition());
+		}
+			AmountofEnemies[indexEnemies]->HitByBullet(Player1->GetBulletAmount());
+		
+		
+		
+
+	}
+	for (int index = 0; index < AmountofEnemies.size(); index++)
+	{
+		if (index=AmountofEnemies.size())
+		{
+			m_EnemyVertices.clear();
 		}
 	}
 	for (int i = 0; i < 40; i++)
 	{
-		if (g_PworkPlaces[i]!=nullptr)
+		if (m_PworkPlaces[i]!=nullptr)
 		{
-			g_PworkPlaces[i]->Update(Vertices);
+			m_PworkPlaces[i]->SetOuterWalls(m_outerwallPosition.x, m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall);
+			m_PworkPlaces[i]->Update(Vertices);
+			if (m_PworkPlaces[i]->IsPlutoniumReady()==true)
+			{
+				Player1->AddPlutonium(m_PworkPlaces[i]->GetReadyPlutonium());
+			}
+
+		}
+	}
+
+	for (int i = 0; i < AmountofEnemies.size(); i++)
+	{
+		if (AmountofEnemies[i] != nullptr)
+		{
+			if (AmountofEnemies[i]->GetHealth() <= 0)
+			{
+				Player1->Addcash(AmountofEnemies[i]->GetCurrency());
+				delete AmountofEnemies[i];
+				AmountofEnemies.erase(AmountofEnemies.begin() + i);
+				--i;
+			}
 		}
 	}
 
@@ -68,27 +111,44 @@ void Game::Draw( ) const
 {
 	ClearBackground();
 	utils::SetColor(Color4f{ 0.0f, 0.0f, 0.0f,1.0f });
-	utils::FillRect(g_FactoryLocationOuterWall.x - g_FactoryWidthOuterWall / 2, g_FactoryLocationOuterWall.y - g_FactoryHeightOuterWall / 2, g_FactoryWidthOuterWall, g_FactoryHeightOuterWall);
+	utils::FillRect(m_FactoryLocationOuterWall.x - m_FactoryWidthOuterWall / 2, m_FactoryLocationOuterWall.y - m_FactoryHeightOuterWall / 2, m_FactoryWidthOuterWall, m_FactoryHeightOuterWall);
 
 	utils::SetColor(Color4f{ 1.0f,1.0f,1.0f,1.0f });
-	utils::FillRect(g_FactoryGround);
+	utils::FillRect(m_FactoryGround);
 	DrawGridView();
 
 	for (int i = 0; i  < Rows*Collumns; ++i )
 	{
-		if (g_PworkPlaces[i]!=nullptr)
+		if (m_PworkPlaces[i]!=nullptr)
 		{
-			g_PworkPlaces[i]->Display();
+			m_PworkPlaces[i]->Display();
 		}
 	}
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
-		AmountofEnemies[i]->Display();
-		if (AmountofEnemies[i]->GetPosition().x <= 0 || AmountofEnemies[i]->GetPosition().x >= GetViewPort().width || AmountofEnemies[i]->GetPosition().y <= 0 || AmountofEnemies[i]->GetPosition().y >= GetViewPort().height)
+		if (AmountofEnemies[i] != nullptr)
 		{
-			AmountofEnemies[i]->SetPosition(Point2f{ 20.0f,40.0f });
+			AmountofEnemies[i]->Display();
+			if (AmountofEnemies[i]->GetPosition().x <= 0&&AmountofEnemies[i]->GetPosition().y<=0)
+			{
+				AmountofEnemies[i]->SetPosition(Point2f{ GetViewPort().width,10.0f});
+			}
+			else if (AmountofEnemies[i]->GetPosition().x <= 0 && AmountofEnemies[i]->GetPosition().y >= GetViewPort().height)
+			{
+				AmountofEnemies[i]->SetPosition(Point2f{ GetViewPort().width,GetViewPort().height-10});
+			}
+			else if (AmountofEnemies[i]->GetPosition().x>=GetViewPort().width&&AmountofEnemies[i]->GetPosition().y <= 0)
+			{
+				AmountofEnemies[i]->SetPosition(Point2f{ 0,10 });
+			}
+			else if (AmountofEnemies[i]->GetPosition().x >= GetViewPort().width && AmountofEnemies[i]->GetPosition().y >= GetViewPort().height)
+			{
+				AmountofEnemies[i]->SetPosition(Point2f{ 0,GetViewPort().height-10});
+			}
 		}
 	}
+	Player1->DisplayResources();
+	Player1->DisplayPlayer();
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -140,12 +200,24 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 	default:
 		break;
 	case SDL_BUTTON_LEFT:
-		for (int i = 0; i < 40; i++)
+		if (Player1->IsShot()==false)
 		{
-			g_PworkPlaces[i]->CreateRobotWorkPlace(g_FactoryGround.left, g_FactoryGround.bottom, g_FactoryGround.width, g_FactoryGround.height,Rows, Collumns,Point2f{float(e.x), float(e.y)},g_PworkPlaces);
-			/*CheckPlacement(Point2f{float( e.x),float(e.y) });*/
+			if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall && Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
+			{
+				Player1->SetBulletDirection(Point2f{ float(e.x),float(e.y) });
+			}
 		}
-		
+
+		for (int i = 0; i <Rows*Collumns; i++)
+		{
+			if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom&&Player1->GetCash()>=200)
+			{
+				Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
+				m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces);
+			}
+			/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
+		}
+		m_Amountworkplaces += 1;
 		std::cout << e.x << " " << (e.y) << std::endl;
 		break;
 	}
@@ -174,15 +246,15 @@ void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
 
 void Game::DrawGridView()const
 {
-	float cellWidth	{ g_FactoryGround.width / Collumns };
-	float cellHeight{ g_FactoryGround.height / Rows };
+	float cellWidth	{ m_FactoryGround.width / Collumns };
+	float cellHeight{ m_FactoryGround.height / Rows };
 	utils::SetColor(Color4f{ 0.0f,0.0f,0.0f,1.0f });
 	for (int rows = 0; rows < Rows; ++rows)
 	{
 		for (int col = 0; col < Collumns; col++)
 		{
-			utils::DrawRect(g_FactoryGround.left + col * cellWidth,
-			g_FactoryGround.bottom + rows * cellHeight,
+			utils::DrawRect(m_FactoryGround.left + col * cellWidth,
+			m_FactoryGround.bottom + rows * cellHeight,
 			cellWidth, cellHeight);
 		}
 	}
@@ -190,22 +262,30 @@ void Game::DrawGridView()const
 
 void Game::CheckPlacement(const Point2f& pos)
 {
-	const float cellW{ g_FactoryGround.width / Collumns };
-	const float cellH{ g_FactoryGround.height /Rows};
+	const float cellW{ m_FactoryGround.width / Collumns };
+	const float cellH{ m_FactoryGround.height /Rows};
 
-	int col{ int((pos.x - g_FactoryGround.left) / cellW) };
-	int row{ int((pos.y - g_FactoryGround.bottom) / cellH) };
+	int col{ int((pos.x - m_FactoryGround.left) / cellW) };
+	int row{ int((pos.y - m_FactoryGround.bottom) / cellH) };
 
-	const float x{ g_FactoryGround.left + col * cellW };
-	const float  y{ g_FactoryGround.bottom + row * cellH };
+	const float x{ m_FactoryGround.left + col * cellW };
+	const float  y{ m_FactoryGround.bottom + row * cellH };
 
 	const int index{ row * Collumns + col };
 
-	if (g_PworkPlaces[index]==nullptr)
+	if (m_PworkPlaces[index] == nullptr)
 	{
 		RobotWorkPlace* pRoboyWorkPlace{ new RobotWorkPlace(Point2f{x,y}) };
-		g_PworkPlaces[index] = pRoboyWorkPlace;
+		m_PworkPlaces[index] = pRoboyWorkPlace;
 	}
+	
+
+}
+
+void Game::SpawnEnemies()
+{
+	enemies* NewEnemy = new enemies{ 100,10 };
+	AmountofEnemies.push_back(NewEnemy);
 }
 
 int Game::CreateRandomNumber( int max)

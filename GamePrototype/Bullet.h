@@ -10,10 +10,12 @@ public:
 	void Display();
 	void SetPosition(Point2f& RobotPosition);
 	void Update();
+	void UpdateHitbox();
 	void UpdateBulletVelocity(Point2f ShootingVelocity);
 
+	Rectf   GetHitbox();
 	Point2f GetPosition();
-	
+	bool GetIsTraveling();
 protected:
 	Point2f m_bulletPosition;
 
@@ -21,7 +23,7 @@ protected:
 	int m_TravelTime;
 	int m_TravelSpeed;
 	
-	float m_width;
+	float m_Width;
 	float m_height;
 	float m_DirectionX;
 	float m_DirectionY;
@@ -30,6 +32,6 @@ protected:
 	float m_length;
 
 	bool m_IsbulletTravelling;
-
+	Rectf m_Hitbox;
 };
 

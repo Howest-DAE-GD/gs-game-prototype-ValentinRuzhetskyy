@@ -26,24 +26,25 @@ public:
 	void ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e ) override;
 	void ProcessMouseDownEvent( const SDL_MouseButtonEvent& e ) override;
 	void ProcessMouseUpEvent( const SDL_MouseButtonEvent& e ) override;
+	void DeleteEnemy(int index);
 	void DrawGridView() const ;
+	Point2f getRandomPoint2f(float x_min, float x_max, float y_min, float y_max);
+	float  getRandomFloat(float lower_bound, float upper_bound);
 	void CheckPlacement(const Point2f& pos);
 	void SpawnEnemies();
 	int CreateRandomNumber(  int max);
-
-
+	void DrawExplosion() const;
 private:
 	// FUNCTIONS
 	void Initialize();
 	void Cleanup( );
 	void ClearBackground( ) const;
-	
+
 
 	Point2f m_FactoryLocationOuterWall{GetViewPort().width/2,GetViewPort().height/2};
 	float	m_FactoryWidthOuterWall{300};
 	float	m_FactoryHeightOuterWall{300};
 	Point2f m_outerwallPosition{273.0f,100.0f};
-
 	Point2f m_FactoryLocationCamp{ (GetViewPort().width / 2) ,(GetViewPort().height / 2) };
 	float	m_FactoryWidthCamp{ 240 };
 	float	m_FactorHeightCamp{ 240 };
@@ -69,6 +70,9 @@ private:
 		VerticesOuterWall,
 		ScreenBorder
 	};
+	std::vector<std::vector<Point2f>>VerticesPlayer{
+		ScreenBorder
+	};
 	std::vector<std::vector<Point2f>>m_EnemyVertices;
 
 	const int Rows{ 5 };
@@ -76,6 +80,7 @@ private:
 
 //	std::vector<RobotWorkPlace*> g_CapacityOfWorkSpaces[40]{};
 	RobotWorkPlace*m_PworkPlaces[40]{};
+	//std::vector<RobotWorkPlace*> m_PworkPlaces;
 	std::vector<enemies*> AmountofEnemies{1};
 	//std::vector<Robot*>Robots{};
 
@@ -83,8 +88,13 @@ private:
 
 	int TotalAmountRobots{0};
 	int m_Amountworkplaces{0};
-
+	bool m_isExplosionReady{false};
 	float timer{ 0 };
 	Player* Player1;
 	int id = AmountofEnemies.size();
+	Point2f rectfOffset{ 2,2 };
+	Point2f m_rectf1Position{400 ,250 };
+	Point2f m_rectf2Position{ 400 ,250 };
+	Point2f m_rectf3Position{ 400 ,250 };
+	Point2f m_rectf4Position{ 400 ,250 };
 };

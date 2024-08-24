@@ -9,7 +9,8 @@ RobotWorkPlace::RobotWorkPlace(Point2f pos) :
 	m_widthProgressBar{ 0.0f },
 	m_BuildTimer{ 0 },
 	m_IsCreated{false},
-	m_Plutonium{0}
+	m_Plutonium{0},
+	m_plutoniumLimit{5}
 {
 	
 }
@@ -43,7 +44,7 @@ void RobotWorkPlace::Update(const std::vector< std::vector<Point2f>>& AllVertice
 		m_widthProgressBar = m_widthProgressBar + 1.0f;
 
 	}
-	else if(m_widthProgressBar>=m_widthFrameProgressBar)
+	else if(m_widthProgressBar>=m_widthFrameProgressBar&&m_Plutonium<m_plutoniumLimit)
 	{
 		m_IsPlutoniumReady = true;
 		m_Plutonium += 1;

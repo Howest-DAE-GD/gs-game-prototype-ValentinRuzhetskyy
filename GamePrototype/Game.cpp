@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Game.h"
+#include <random>
 
 Game::Game( const Window& window ) 
 	:BaseGame{ window }
@@ -15,25 +16,33 @@ Game::~Game( )
 
 void Game::Initialize( )
 {
-	Player1 = new Player{ Point2f{20.0f,460.0f}, Point2f{300.0f,200.0f}, Point2f{650.0f,460.0f } };
+	Player1 = new Player{ Point2f{20.0f,460.0f}, Point2f{300.0f,200.0f}, Point2f{650.0f,460.0f },Point2f{320,460} };
 	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
-		AmountofEnemies[i] = new enemies{ 100.0f,10.0f };
+		AmountofEnemies[i] = new enemies{ getRandomPoint2f(20, 820,20 ,480) };
 		AmountofEnemies[i]->setId(i);
 	};
+	std::cout << "Left mousebutton: shooting" << std::endl;
+	std::cout << "A: Moving left"			  << std::endl;
+	std::cout << "D: Moving right"			  << std::endl;
+	std::cout << "S: Moving Down"			  << std::endl;
+	std::cout << "W: Moving Up"				  << std::endl;
 }
 
 void Game::Cleanup( )
 {
-	for (int i = 0; i < m_Amountworkplaces; i++)
+	if (m_Amountworkplaces>-1)
 	{
-		delete	m_PworkPlaces[i];
-		m_PworkPlaces[i] = nullptr;
+		//for (int i = 0; i < m_Amountworkplaces - 1; i++)
+		//{
+		//	delete[]  m_PworkPlaces[i];
+		//	m_PworkPlaces[i] = nullptr;
+		//}
 	}
+
 
 	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
-
 		delete AmountofEnemies[i];
 		AmountofEnemies[i] = nullptr;
 	}
@@ -49,47 +58,63 @@ void Game::Update( float elapsedSec )
 	}
 	else if (timer>3)
 	{
-		
 		SpawnEnemies();
 		timer = 0;
 	}
-	Player1->Update(elapsedSec);
 
-	for (int indexEnemies = 0; indexEnemies < AmountofEnemies.size(); indexEnemies++)
-	{
-		AmountofEnemies[indexEnemies]->Update( elapsedSec);
-		AmountofEnemies[indexEnemies]->SetEnemyVertices(m_EnemyVertices);
-		AmountofEnemies[indexEnemies]->RayCast(Vertices);
-		if (AmountofEnemies[indexEnemies]->GetIsCollidedWithWall()==false)
-		{
-			AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition());
-		}
-			AmountofEnemies[indexEnemies]->HitByBullet(Player1->GetBulletAmount());
+	if (!Player1->GetIsDeath()) {
 		
-		
-		
-
+		Player1->Update(elapsedSec);
+		Player1->RayCast(VerticesPlayer);
 	}
-	for (int index = 0; index < AmountofEnemies.size(); index++)
+	
+	if (!m_isExplosionReady)
 	{
-		if (index=AmountofEnemies.size())
+		for (int indexEnemies = 0; indexEnemies < AmountofEnemies.size(); indexEnemies++)
 		{
-			m_EnemyVertices.clear();
-		}
-	}
-	for (int i = 0; i < 40; i++)
-	{
-		if (m_PworkPlaces[i]!=nullptr)
-		{
-			m_PworkPlaces[i]->SetOuterWalls(m_outerwallPosition.x, m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall);
-			m_PworkPlaces[i]->Update(Vertices);
-			if (m_PworkPlaces[i]->IsPlutoniumReady()==true)
+			AmountofEnemies[indexEnemies]->Update(elapsedSec);
+			AmountofEnemies[indexEnemies]->SetEnemyVertices(m_EnemyVertices);
+			AmountofEnemies[indexEnemies]->RayCast(Vertices);
+			if (AmountofEnemies[indexEnemies]->GetIsCollidedWithWall() == false)
 			{
-				Player1->AddPlutonium(m_PworkPlaces[i]->GetReadyPlutonium());
+				AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition());
 			}
-
+			AmountofEnemies[indexEnemies]->HitByBullet(Player1->GetBulletAmount());
+			if ( utils::IsOverlapping( Player1->GetPlayerHitbox(), AmountofEnemies[indexEnemies]->GetHitbox()))
+			{
+				Player1->Collision();
+				DeleteEnemy(indexEnemies);
+			}
+		}
+		for (int index = 0; index < AmountofEnemies.size(); index++)
+		{
+			if (index = AmountofEnemies.size())
+			{
+				m_EnemyVertices.clear();
+			}
 		}
 	}
+	else if (m_isExplosionReady)
+	{
+		AmountofEnemies.clear();
+	}
+
+	if (!m_isExplosionReady)
+	{
+		for (int i = 0; i < 40; i++)
+		{
+			if (m_PworkPlaces[i] != nullptr)
+			{
+				m_PworkPlaces[i]->SetOuterWalls(m_outerwallPosition.x, m_outerwallPosition.y, m_FactoryWidthOuterWall, m_FactoryHeightOuterWall);
+				m_PworkPlaces[i]->Update(Vertices);
+				if (m_PworkPlaces[i]->IsPlutoniumReady())
+				{
+					Player1->AddPlutonium(m_PworkPlaces[i]->GetReadyPlutonium());
+				}
+			}
+		}
+	}
+
 
 	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
@@ -98,13 +123,21 @@ void Game::Update( float elapsedSec )
 			if (AmountofEnemies[i]->GetHealth() <= 0)
 			{
 				Player1->Addcash(AmountofEnemies[i]->GetCurrency());
-				delete AmountofEnemies[i];
-				AmountofEnemies.erase(AmountofEnemies.begin() + i);
-				--i;
+				DeleteEnemy(i);
 			}
 		}
 	}
 
+	if (Player1->GetPlutonium()>=40)
+	{
+		m_isExplosionReady = true;
+	}
+	if (m_isExplosionReady)
+	{
+		rectfOffset.x += 2;
+		rectfOffset.y += 2;
+	}
+	Player1->ManageBullets(0, 0, 846.f, 500.f);
 }
 
 void Game::Draw( ) const
@@ -147,8 +180,12 @@ void Game::Draw( ) const
 			}
 		}
 	}
+	if (!Player1->GetIsDeath())	Player1->DisplayPlayer();
+
 	Player1->DisplayResources();
-	Player1->DisplayPlayer();
+	DrawExplosion();
+
+
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -194,34 +231,35 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 	//	std::cout << " middle button " << std::endl;
 	//	break;
 	//}
-
-	switch (e.button)
+	if (!Player1->GetIsDeath())
 	{
-	default:
-		break;
-	case SDL_BUTTON_LEFT:
-		if (Player1->IsShot()==false)
+		switch (e.button)
 		{
-			if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall && Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
-			{
-				Player1->SetBulletDirection(Point2f{ float(e.x),float(e.y) });
-			}
-		}
+		default:
+			break;
+		case SDL_BUTTON_LEFT:
 
-		for (int i = 0; i <Rows*Collumns; i++)
-		{
-			if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom&&Player1->GetCash()>=200)
+				if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall || Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
+				{
+						std::cout << "left click" << std::endl;
+						Player1->SetBulletDirection(Point2f{ float(e.x),float(e.y) });
+					
+				}
+
+			for (int i = 0; i < Rows * Collumns; i++)
 			{
-				Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
-				m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces);
+				if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom && Player1->GetCash() >= 200)
+				{
+					Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
+					m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces);
+				}
+				/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
 			}
-			/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
+			m_Amountworkplaces += 1;
+			//	std::cout << e.x << " " << (e.y) << std::endl;
+			break;
 		}
-		m_Amountworkplaces += 1;
-		std::cout << e.x << " " << (e.y) << std::endl;
-		break;
 	}
-	
 }
 
 void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
@@ -242,6 +280,13 @@ void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
 
 }
 
+void Game::DeleteEnemy(int index)
+{
+	delete AmountofEnemies[index];
+	AmountofEnemies.erase(AmountofEnemies.begin() + index);
+	--index;
+}
+
 
 
 void Game::DrawGridView()const
@@ -253,10 +298,47 @@ void Game::DrawGridView()const
 	{
 		for (int col = 0; col < Collumns; col++)
 		{
-			utils::DrawRect(m_FactoryGround.left + col * cellWidth,
-			m_FactoryGround.bottom + rows * cellHeight,
-			cellWidth, cellHeight);
+			utils::DrawRect(m_FactoryGround.left + col * cellWidth,m_FactoryGround.bottom + rows * cellHeight, cellWidth, cellHeight);
 		}
+	}
+}
+
+Point2f Game::getRandomPoint2f(float x_min, float x_max, float y_min, float y_max)
+{
+	Point2f point;
+	point.x = getRandomFloat(x_min, x_max);
+	point.y = getRandomFloat(y_min, y_max);
+	do
+	{
+		point.x = getRandomFloat(x_min, x_max);
+		point.y = getRandomFloat(y_min, y_max);
+	} while (utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x,m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall }));
+	if (!utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x,m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall }))
+	{
+		return point;
+	}
+
+}
+
+
+
+float Game::getRandomFloat(float lower_bound, float upper_bound)
+{
+	static std::random_device rd;  // Seed for the random number engine
+	static std::mt19937 gen(rd()); // Mersenne Twister engine
+	std::uniform_real_distribution<float> dis(lower_bound, upper_bound);
+	return dis(gen);
+}
+
+void Game::DrawExplosion() const
+{ 
+	if (m_isExplosionReady)
+	{
+		utils::SetColor(Color4f{ 0.5f,0.0f, 0.0f, 1.0f });
+		utils::FillRect( m_rectf1Position.x -rectfOffset.x, m_rectf1Position.y+rectfOffset.y,100, 100);
+		utils::FillRect( m_rectf2Position.x - rectfOffset.x, m_rectf2Position.y - rectfOffset.y,100, 100);
+		utils::FillRect( m_rectf3Position.x + rectfOffset.x, m_rectf3Position.y + rectfOffset.y, 100, 100);
+		utils::FillRect( m_rectf4Position.x + rectfOffset.x, m_rectf4Position.y - rectfOffset.y, 100, 100);
 	}
 }
 
@@ -284,7 +366,7 @@ void Game::CheckPlacement(const Point2f& pos)
 
 void Game::SpawnEnemies()
 {
-	enemies* NewEnemy = new enemies{ 100,10 };
+	enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480 )};
 	AmountofEnemies.push_back(NewEnemy);
 }
 

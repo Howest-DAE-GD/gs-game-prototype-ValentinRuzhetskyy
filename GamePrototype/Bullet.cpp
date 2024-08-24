@@ -3,13 +3,18 @@
 
 Bullet::Bullet(Point2f Position)
 	:m_bulletPosition(Position),
-	m_width(5.0f),
+	m_Width(5.0f),
 	m_height(5.0f),
 	m_TravelTime{0},
 	m_TravelSpeed{5},
 	m_IsbulletTravelling{false}
 {
+	m_Hitbox.width = 5;
+	m_Hitbox.height = 5;
+}
 
+Bullet::~Bullet()
+{
 }
 
 void Bullet::Display()
@@ -17,7 +22,7 @@ void Bullet::Display()
 	if (this!=nullptr)
 	{
 		utils::SetColor(Color4f{ 0.0f,1.0f,0.0f,1.0f });
-		utils::FillRect(m_bulletPosition.x, m_bulletPosition.y, m_width, m_height);
+		utils::FillRect(m_bulletPosition.x, m_bulletPosition.y, m_Width, m_height);
 	}
 
 }
@@ -100,11 +105,18 @@ void Bullet::Update()
 
 			m_bulletPosition.x += m_VectorX;
 			m_bulletPosition.y += m_VectorY;
+			UpdateHitbox();
 		}
 	}
 	//std::cout << m_bulletPosition.x << "/" << m_bulletPosition.y<<std::endl;
 
 
+}
+
+void Bullet::UpdateHitbox()
+{
+	m_Hitbox.left	= m_bulletPosition.x;
+	m_Hitbox.bottom = m_bulletPosition.y;
 }
 
 
@@ -117,10 +129,9 @@ void Bullet::UpdateBulletVelocity(Point2f ShootingVelocity)
 		//if		(xOperator == "+")		m_bulletPosition.x += m_TravelSpeed;
 		//else if (xOperator == "-")		m_bulletPosition.x -= m_TravelSpeed;
 		//
-
 		//if (yOperator == "+")			m_bulletPosition.y += m_TravelSpeed;
 		//else if (yOperator == "-")		m_bulletPosition.y -= m_TravelSpeed;
-		std::cout << "passed thru here" << std::endl;
+		//std::cout << "passed thru here" << std::endl;
 
 		m_IsbulletTravelling = true;
 	}
@@ -129,6 +140,11 @@ void Bullet::UpdateBulletVelocity(Point2f ShootingVelocity)
 
 
 
+Rectf Bullet::GetHitbox()
+{
+	return m_Hitbox;
+}
+
 Point2f Bullet::GetPosition()
 {
 	if (this!=nullptr)
@@ -136,4 +152,9 @@ Point2f Bullet::GetPosition()
 		return m_bulletPosition;
 	}
 
+}
+
+bool Bullet::GetIsTraveling()
+{
+	return m_IsbulletTravelling;
 }

@@ -27,7 +27,7 @@ protected:
 	
 private:
 	int m_Plutonium;
-
+	int m_plutoniumLimit;
 	
 
 	float m_widthFrameProgressBar;

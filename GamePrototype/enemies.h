@@ -7,7 +7,7 @@ class Bullet;
 class enemies
 {
 public:
-	enemies(float posX, float posY);
+	enemies(Point2f position);
 	void RayCast(const std::vector< std::vector<Point2f>>& AllVertices);
 	void IsPlayerCloseBy(Point2f playerPosition);
 	void Update( float elapsedsec);
@@ -19,7 +19,7 @@ public:
 	bool GetIsCollidedWithWall();
 	int GetCurrency();
 	int GetHealth();
-
+	Rectf GetHitbox();
 	Point2f GetPosition();
 
 	std::vector<std::vector<Point2f>> SetEnemyVertices(std::vector<std::vector<Point2f>>&enemyVertices);

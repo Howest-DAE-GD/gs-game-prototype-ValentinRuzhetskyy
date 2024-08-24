@@ -2,8 +2,8 @@
 #include "enemies.h"
 #include "Robot.h"
 #include "Bullet.h"
-enemies::enemies(float pointX,float pointY):
-m_Enemypos{pointX,pointY},
+enemies::enemies(Point2f Position):
+m_Enemypos{ Position },
 m_counter{ 0 },
 m_IsPlayerCloseBy{false},
 m_isCollidedWithWall{false},
@@ -30,16 +30,13 @@ void enemies::RayCast(const std::vector<std::vector<Point2f>>& AllVertices)
 				{
 					m_isCollidedWithWall = true;
 					m_Speed = 0;
-			/*		m_Enemypos.x++;*/
-
+				/*m_Enemypos.x++;*/
 				}
 				else
 				{
 					m_isCollidedWithWall = false;
 					m_Speed = 3.25;
 				}
-
-
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width + 8, m_Enemypos.y), m_hitInfo))
 			{
@@ -295,6 +292,11 @@ int enemies::GetHealth()
 
 }
 
+Rectf enemies::GetHitbox()
+{
+	return m_enemybounds;
+}
+
 Point2f enemies::GetPosition()
 {
 	if (this!=nullptr)
@@ -357,7 +359,7 @@ void enemies::HitByBullet(std::vector<Bullet*> Bulletpositions)
 {
 	for (int i = 0; i < Bulletpositions.size(); i++)
 	{
-		if (utils::IsPointInRect(Bulletpositions[i]->GetPosition(), m_enemybounds) )
+		if (utils::IsOverlapping(Bulletpositions[i]->GetHitbox(), m_enemybounds) )
 		{
 			m_health -= 1;
 		}

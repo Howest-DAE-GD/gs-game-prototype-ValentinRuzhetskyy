@@ -2,15 +2,19 @@
 #include "enemies.h"
 #include "Robot.h"
 #include "Bullet.h"
-enemies::enemies(Point2f Position):
+enemies::enemies(Point2f Position, float speed, int health, int cash):
 m_Enemypos{ Position },
 m_counter{ 0 },
 m_IsPlayerCloseBy{false},
 m_isCollidedWithWall{false},
-m_health{1},
+m_isCollidedWithCeiling{false},
+m_isCollidedWithLeftWall{false},
+m_isCollidedWithRightWall{false},
+m_isCollidedWithLowerGround{false},
+m_health{ health },
 m_isAlive{true},
-m_cash{10}
-
+m_Speed{ speed },
+m_cash{ cash }
 {
 	m_RandomDirection = 2;
 
@@ -21,126 +25,50 @@ m_cash{10}
 void enemies::RayCast(const std::vector<std::vector<Point2f>>& AllVertices)
 {
 	//std::cout << m_isCollidedWithWall << std::endl
+	m_isCollidedWithLeftWall	= false;
+	m_isCollidedWithRightWall	= false;
+	m_isCollidedWithCeiling		= false;
+	m_isCollidedWithLowerGround = false;
 		for (int index{}; index < AllVertices.size(); ++index)
 		{
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x - 8, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y), m_hitInfo))
 			{
 				//std::cout << "hit1" << std::endl;
-				if (EnemyDirection == Direction::left || EnemyDirection == Direction::LeftUp || EnemyDirection == Direction::LeftDown)
-				{
-					m_isCollidedWithWall = true;
-					m_Speed = 0;
-				/*m_Enemypos.x++;*/
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithLeftWall = true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width + 8, m_Enemypos.y), m_hitInfo))
 			{
 				//std::cout << "hit2" << std::endl;
-				if (EnemyDirection == Direction::right || EnemyDirection == Direction::RightDown || EnemyDirection == Direction::RightUp)
-				{
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-					/*m_Enemypos.x--;*/
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithRightWall = true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x - 8, m_Enemypos.y + m_Height), Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y + m_Height), m_hitInfo))
 			{
 				//std::cout << "hit3" << std::endl;
-				if (EnemyDirection == Direction::left || EnemyDirection == Direction::LeftDown || EnemyDirection == Direction::LeftUp)
-				{
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-					/*m_Enemypos.x++;*/
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithLeftWall = true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y + m_Height), Point2f(m_Enemypos.x + m_Width + 8, m_Enemypos.y + m_Height), m_hitInfo))
 			{
 				//std::cout << "hit4" << std::endl;
-				if (EnemyDirection == Direction::right || EnemyDirection == Direction::RightUp || EnemyDirection == Direction::RightDown)
-				{
-					/*m_Enemypos.x--;*/
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithRightWall = true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x, m_Enemypos.y - 8), Point2f(m_Enemypos.x, m_Enemypos.y + m_Height / 2), m_hitInfo))
 			{
-				if (EnemyDirection == Direction::down || EnemyDirection == Direction::LeftDown || EnemyDirection == Direction::RightDown)
-				{
-					/*m_Enemypos.y++;*/
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithLowerGround = true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x, m_Enemypos.y + m_Height / 2), Point2f(m_Enemypos.x, m_Enemypos.y + m_Height + 8), m_hitInfo))
 			{
-				if (EnemyDirection == Direction::up || EnemyDirection == Direction::LeftUp || EnemyDirection == Direction::RightUp)
-				{
-					/*m_Enemypos.y--;*/
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithCeiling		= true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x + m_Width, m_Enemypos.y - 8), Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height / 2), m_hitInfo))
 			{
-				if (EnemyDirection == Direction::down || EnemyDirection == Direction::LeftDown || EnemyDirection == Direction::RightDown)
-				{
-					/*m_Enemypos.y++;*/
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithLowerGround = true;
 			}
 			if (utils::Raycast(AllVertices[index], Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height / 2), Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height + 8), m_hitInfo))
 			{
-				if (EnemyDirection == Direction::up || EnemyDirection == Direction::LeftUp || EnemyDirection == Direction::RightUp)
-				{
-					/*m_Enemypos.y--;*/
-					m_Speed = 0;
-					m_isCollidedWithWall = true;
-				}
-				else
-				{
-					m_isCollidedWithWall = false;
-					m_Speed = 3.25;
-				}
+				m_isCollidedWithCeiling = true;
 			}
 		}
-
+		//std::cout << m_isCollidedWithWall << std::endl;
 	
 }
 
@@ -174,15 +102,45 @@ void enemies::IsPlayerCloseBy(Point2f PlayerPosition)
 	//				}
 	//			}
 	//		}
-		if (abs(PlayerPosition.x-m_Enemypos.x)<100.0f&& abs(PlayerPosition.y-m_Enemypos.y)<100.0f)
+		if (!m_isCollidedWithWall)
 		{
-			m_IsPlayerCloseBy = true;
-			if		(PlayerPosition.x > m_Enemypos.x)	m_Enemypos.x += m_Speed;
-			else if (PlayerPosition.x < m_Enemypos.x)	m_Enemypos.x -= m_Speed;
+			if (abs(PlayerPosition.x - m_Enemypos.x) < 100.0f && abs(PlayerPosition.y - m_Enemypos.y) < 100.0f)
+			{
+				m_IsPlayerCloseBy = true;
+				if (PlayerPosition.x > m_Enemypos.x) { 
+					if (!m_isCollidedWithRightWall)
+					{
+						m_Enemypos.x += m_Speed;
+					}	
+				}
+				else if (PlayerPosition.x < m_Enemypos.x) {
+					if (!m_isCollidedWithLeftWall)
+					{
+						m_Enemypos.x -= m_Speed;
 
-			if (PlayerPosition.y > m_Enemypos.y)		m_Enemypos.y += m_Speed;
-			else if (PlayerPosition.y < m_Enemypos.y)	m_Enemypos.y -= m_Speed;
+					}
+				
+				}
+
+				if (PlayerPosition.y > m_Enemypos.y) { 
+					if (!m_isCollidedWithCeiling)
+					{
+						m_Enemypos.y += m_Speed;
+					}
+				 }
+				else if (PlayerPosition.y < m_Enemypos.y) { 
+					if (!m_isCollidedWithLowerGround)
+					{
+						m_Enemypos.y -= m_Speed;
+					}
+				}
+			}
+			else
+			{
+				m_IsPlayerCloseBy = false;
+			}
 		}
+
 
 	}
 }
@@ -251,36 +209,73 @@ void enemies::Update( float elapsedsec)
 			default:
 				break;
 			case Direction::left:
-				m_Enemypos.x -= m_Speed;
+				if (!m_isCollidedWithLeftWall)
+				{
+					m_Enemypos.x -= m_Speed;
+				}
 				break;
 			case Direction::right:
-				m_Enemypos.x += m_Speed;
+				if (!m_isCollidedWithRightWall)
+				{
+					m_Enemypos.x += m_Speed;
+				}
 				break;
 			case Direction::up:
-				m_Enemypos.y += m_Speed;
+				if (!m_isCollidedWithCeiling)
+				{
+					m_Enemypos.y += m_Speed;
+				}
 				break;
 			case Direction::down:
-				m_Enemypos.y -= m_Speed;
+				if (!m_isCollidedWithLowerGround)
+				{
+					m_Enemypos.y -= m_Speed;
+				}
 				break;
 			case Direction::LeftUp:
-				m_Enemypos.x -= m_Speed;
-				m_Enemypos.y += m_Speed;
+				if (!m_isCollidedWithLeftWall)
+				{
+					m_Enemypos.x -= m_Speed;
+				}
+				if (!m_isCollidedWithCeiling)
+				{
+					m_Enemypos.y += m_Speed;
+				}
 				break;
 			case Direction::LeftDown:
-				m_Enemypos.x -= m_Speed;
-				m_Enemypos.y -= m_Speed;
+				if (!m_isCollidedWithLeftWall)
+				{
+					m_Enemypos.x -= m_Speed;
+				}
+				if (!m_isCollidedWithLowerGround)
+				{
+					m_Enemypos.y -= m_Speed;
+				}
 				break;
 			case Direction::RightUp:
-				m_Enemypos.x += m_Speed;
-				m_Enemypos.y += m_Speed;
+				if (!m_isCollidedWithRightWall)
+				{
+					m_Enemypos.x += m_Speed;
+				}
+				if (!m_isCollidedWithCeiling)
+				{
+					m_Enemypos.y += m_Speed;
+				}
 				break;
 			case Direction::RightDown:
-				m_Enemypos.x += m_Speed;
-				m_Enemypos.y -= m_Speed;
+				if (!m_isCollidedWithRightWall)
+				{
+					m_Enemypos.x += m_Speed;
+				}
+				if (!m_isCollidedWithCeiling)
+				{
+					m_Enemypos.y += m_Speed;
+				}
 				break;
 			};
 		}
 	}
+	//std::cout << m_health << std::endl;
 }
 
 int enemies::GetHealth()
@@ -355,13 +350,16 @@ void enemies::Sethealth(int health)
 
 }
 
-void enemies::HitByBullet(std::vector<Bullet*> Bulletpositions)
+void enemies::HitByBullet(std::vector<Bullet*>& Bulletpositions)
 {
 	for (int i = 0; i < Bulletpositions.size(); i++)
 	{
 		if (utils::IsOverlapping(Bulletpositions[i]->GetHitbox(), m_enemybounds) )
 		{
 			m_health -= 1;
+			delete Bulletpositions[i];
+			Bulletpositions.erase(Bulletpositions.begin() + i);
+			--i;
 		}
 	}
 

@@ -6,7 +6,7 @@ Bullet::Bullet(Point2f Position)
 	m_Width(5.0f),
 	m_height(5.0f),
 	m_TravelTime{0},
-	m_TravelSpeed{5},
+	m_TravelSpeed{8},
 	m_IsbulletTravelling{false}
 {
 	m_Hitbox.width = 5;

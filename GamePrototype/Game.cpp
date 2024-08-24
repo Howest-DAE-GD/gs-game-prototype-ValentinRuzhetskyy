@@ -17,16 +17,28 @@ Game::~Game( )
 void Game::Initialize( )
 {
 	Player1 = new Player{ Point2f{20.0f,460.0f}, Point2f{300.0f,200.0f}, Point2f{650.0f,460.0f },Point2f{320,460} };
+	PowerUp = new PowerUps{  };
 	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
-		AmountofEnemies[i] = new enemies{ getRandomPoint2f(20, 820,20 ,480) };
+		AmountofEnemies[i] = new enemies{ getRandomPoint2f(20, 820,20 ,480), 3.25,1,10 };
 		AmountofEnemies[i]->setId(i);
 	};
-	std::cout << "Left mousebutton: shooting" << std::endl;
-	std::cout << "A: Moving left"			  << std::endl;
-	std::cout << "D: Moving right"			  << std::endl;
-	std::cout << "S: Moving Down"			  << std::endl;
-	std::cout << "W: Moving Up"				  << std::endl;
+	std::cout << "-Welcome to Nuke Factory. To progress in the game you will need 2 resources cash and plutonium." << std::endl;
+	std::cout << "-The objective of the game is to obtain 40 plutonium while staying alive. Once 40 is obtained all enemies will die" << std::endl;
+	std::cout << "-Cash is obtained through killing enemies" << std::endl;
+	std::cout << "-Plutonium is obtained by creating factories with the obtained cash. It takes 200 cash to make 1 factory" << std::endl;
+	std::cout << "-1 factory can make 5 plutonium" << std::endl;
+	std::cout << "-These can be placeed on the grid in the middle" << std::endl;
+	std::cout << "-When entering the grid you will aslo get the option to get upgrades which makes you stronger" << std::endl;
+	std::cout << " " << std::endl;
+	std::cout << "Left mousebutton pressed down: shooting" << std::endl;
+	std::cout << "Left mouseButton Released: Factory placed/upgrade chosen" << std::endl;
+	std::cout << "A: Moving left"<< std::endl;
+	std::cout << "D: Moving right"<< std::endl;
+	std::cout << "S: Moving Down"<< std::endl;
+	std::cout << "W: Moving Up"	<< std::endl;
+	//std::cout<<""
+
 }
 
 void Game::Cleanup( )
@@ -137,7 +149,8 @@ void Game::Update( float elapsedSec )
 		rectfOffset.x += 2;
 		rectfOffset.y += 2;
 	}
-	Player1->ManageBullets(0, 0, 846.f, 500.f);
+	Player1->ManageBullets(0, 0, 846.f, 500.f,m_outerwallPosition.x,m_outerwallPosition.y, m_FactoryWidthOuterWall,m_FactoryHeightOuterWall);
+	Player1->SetBulletDirection(Point2f{ float(CurrentMousePosition.x),float(CurrentMousePosition.y) });
 }
 
 void Game::Draw( ) const
@@ -180,6 +193,10 @@ void Game::Draw( ) const
 			}
 		}
 	}
+	if (utils::IsPointInRect(  Player1->GetPlayerPosition(), Rectf{m_outerwallPosition.x,m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall}))
+	{
+		PowerUp->Draw(Player1->GetPlutonium());
+	}
 	if (!Player1->GetIsDeath())	Player1->DisplayPlayer();
 
 	Player1->DisplayResources();
@@ -214,6 +231,8 @@ void Game::ProcessKeyUpEvent( const SDL_KeyboardEvent& e )
 void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 {
 	//std::cout << "MOUSEMOTION event: " << e.x << ", " << e.y << std::endl;
+	CurrentMousePosition.x = e.x;
+	CurrentMousePosition.y = e.y;
 }
 
 void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
@@ -231,6 +250,7 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 	//	std::cout << " middle button " << std::endl;
 	//	break;
 	//}
+//	std::cout << "left click" << std::endl;
 	if (!Player1->GetIsDeath())
 	{
 		switch (e.button)
@@ -239,44 +259,46 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 			break;
 		case SDL_BUTTON_LEFT:
 
-				if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall || Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
-				{
-						std::cout << "left click" << std::endl;
-						Player1->SetBulletDirection(Point2f{ float(e.x),float(e.y) });
-					
-				}
-
-			for (int i = 0; i < Rows * Collumns; i++)
+			if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall || Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
 			{
-				if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom && Player1->GetCash() >= 200)
-				{
-					Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
-					m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces);
-				}
-				/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
+					Player1->SetIsShooting(true);
 			}
-			m_Amountworkplaces += 1;
 			//	std::cout << e.x << " " << (e.y) << std::endl;
 			break;
 		}
 	}
+
 }
 
 void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
 {
+//	std::cout << "mouse released" << std::endl;
 	//std::cout << "MOUSEBUTTONUP event: ";
-	//switch ( e.button )
-	//{
-	//case SDL_BUTTON_LEFT:
-	//	std::cout << " left button " << std::endl;
-	//	break;
+	switch ( e.button )
+	{
+	case SDL_BUTTON_LEFT:
+		for (int i = 0; i < Rows * Collumns; i++)
+		{
+			if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom && Player1->GetCash() >= 200)
+			{
+				Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
+				m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces);
+			}
+			/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
+			PowerUp->BulletCooldownSpeedPressed(Point2f{ float(e.x),float(e.y) }, Player1);
+			PowerUp->ExtraHealthPressed(Point2f{ float(e.x),float(e.y) }, Player1);
+		}
+		Player1->SetIsShooting(false);
+
+		m_Amountworkplaces += 1;
+		break;
 	//case SDL_BUTTON_RIGHT:
 	//	std::cout << " right button " << std::endl;
 	//	break;
 	//case SDL_BUTTON_MIDDLE:
 	//	std::cout << " middle button " << std::endl;
 	//	break;
-	//}
+	}
 
 }
 
@@ -366,8 +388,33 @@ void Game::CheckPlacement(const Point2f& pos)
 
 void Game::SpawnEnemies()
 {
-	enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480 )};
-	AmountofEnemies.push_back(NewEnemy);
+	if (Player1->GetPlutonium()<5)
+	{
+			enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480 ),3.25,1,10};
+			AmountofEnemies.push_back(NewEnemy);
+	}
+	else if (Player1->GetPlutonium() >= 5&&  Player1->GetPlutonium()<10)
+	{
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),3.25,3,15 };
+		AmountofEnemies.push_back(NewEnemy);
+	}
+	else if (Player1->GetPlutonium()>=10&&Player1->GetPlutonium() < 20)
+	{
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),3.55,4,25 };
+		AmountofEnemies.push_back(NewEnemy);
+	}
+	else if ( Player1->GetPlutonium()>=20 && Player1->GetPlutonium() < 30)
+	{
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),3.55,6,30 };
+		AmountofEnemies.push_back(NewEnemy);
+	}
+	else if (Player1->GetPlutonium() >= 30 && Player1->GetPlutonium() <= 40)
+	{
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),4,6,40 };
+		AmountofEnemies.push_back(NewEnemy);
+	}
+
+
 }
 
 int Game::CreateRandomNumber( int max)

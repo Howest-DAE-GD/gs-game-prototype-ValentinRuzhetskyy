@@ -14,11 +14,13 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_timer{ 0 },
 	m_seconds{ 0 },
 	m_ChangesCash{ false },
-	m_Plutonium{ 0 },
-	m_CooldownBetweenShot{ 0.5 },
+	m_Plutonium{ 5 },
+	m_TimeBetweenShot{ 0.5 },
+	m_MaxTimeBetweenShot{0.5},
 	m_IsCooldownBetweenBullet{false},
 	m_bulletId{1},
-	m_updateHealth{false}
+	m_updateHealth{false},
+	m_isShooting{false}
 {
 	AmountOfPlutonium = std::to_string(m_Plutonium) + " " + m_PlutoniumWord;
 	AmountOfCash = std::to_string(m_Cash) +" "+ m_CashWord;
@@ -26,7 +28,7 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_PCashDisplay = new Texture(AmountOfCash, m_textpath, m_Size, Color4f{1.0f,1.0f,1.0f,1.0f});
 	m_pPlutonium = new Texture(AmountOfPlutonium,m_textpath,m_Size,Color4f{1.0f,1.0f,1.0f,1.0f});
 	m_pHealth = new Texture(AmountOfHealth, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
-	m_pBullet.push_back(new Bullet{ PlayerPostion });
+//	m_pBullet.push_back(new Bullet{ PlayerPostion });
 	//m_pBullet.push_back(new Bullet{ PlayerPostion });
 	//m_pBullet.push_back(new Bullet{ PlayerPostion });
 	m_hitbox.width  = 10;
@@ -136,64 +138,28 @@ void Player::Update(float elapsedSec)
 
 	}
 
-			//switch (m_PlayerDirection)
-			//{
-			//case Player::RightUp:
-			//	m_yOperator = "+";
-			//	m_xOperator = "+";
-			//	break;
-			//case Player::RightDown:
-			//	m_yOperator = "-";
-			//	m_xOperator = "+";
-			//	break;
-			//case Player::LeftUp:
-			//	m_yOperator = "+";
-			//	m_xOperator = "-";
-			//	break;
-			//case Player::LeftDown:
-			//	m_yOperator = "-";
-			//	m_xOperator = "-";
-			//	break;
-			//case Player::Right:
-			//	m_yOperator = "nothing";
-			//	m_xOperator = "+";
-			//	break;
-			//case Player::Left:
-			//	m_yOperator = "nothing";
-			//	m_xOperator = "-";
-			//	break;
-			//case Player::Up:
-			//	m_yOperator = "+";
-			//	m_xOperator = "nothing";
-			//	break;
-			//case Player::Down:
-			//	m_yOperator = "-";
-			//	m_xOperator = "nothing";
-			//	break;
-			//default:
-			//	break;
-			//}
 	if (m_IsShot)
 	{
 
-			if (m_timer > 2)
-			{
-				m_seconds += 1;
-				m_timer = 0;
-				//	std::cout << "passed thru timer" << std::endl;
-			}
-			else
-			{
-				//std::cout << m_timer<< std::endl;
-				m_timer += elapsedSec;
-			}
-
+		if (m_timer > 2)
+		{
+			m_seconds += 1;
+			m_timer = 0;
+		//	std::cout << "passed thru timer" << std::endl;
+		}
+		else
+		{
+			//std::cout << m_timer<< std::endl;
+			m_timer += elapsedSec;
+		}
 	}
+
 	if (m_seconds >= 3)
 	{
 		m_IsShot = false;
 		m_seconds = 0;
 	}
+
 	for (int i = 0; i < m_pBullet.size(); i++)
 	{
 		m_pBullet[i]->Update();
@@ -202,16 +168,16 @@ void Player::Update(float elapsedSec)
 	
 	if (m_IsCooldownBetweenBullet)
 	{
-		if (m_CooldownBetweenShot < 0.5)
+		if (m_TimeBetweenShot < m_MaxTimeBetweenShot)
 		{
 		//	std::cout << "goes thru here" << std::endl;
-			m_CooldownBetweenShot += elapsedSec;
+			m_TimeBetweenShot += elapsedSec;
 	
 		}
-		else if (m_CooldownBetweenShot>=0.5)
+		else if (m_TimeBetweenShot>= m_MaxTimeBetweenShot)
 		{
 			m_IsCooldownBetweenBullet=false;
-			m_CooldownBetweenShot = 0;
+			m_TimeBetweenShot = 0;
 		}
 	}
 
@@ -265,6 +231,12 @@ void Player::AddPlutonium(int plutonium)
 	m_ChangesPlutonium = true;
 }
 
+void Player::RemovePlutonium(int plutonium)
+{
+	m_Plutonium -= plutonium;
+	m_ChangesPlutonium = true;
+}
+
 void Player::UpdateHitboxPostion()
 {
 	m_hitbox.left = m_PlayerPosition.x;
@@ -315,22 +287,50 @@ void Player::RayCast(const std::vector< std::vector<Point2f>>& AllVertices)
 	}
 }
 
-void Player::ManageBullets( float xposition,  float yposition,  float width,  float heigth)
+void Player::ManageBullets( float xposition,  float yposition,  float width,  float heigth, float factoryX, float factoryY, float factoryWidth, float factoryHeight)
 {
 	for (int i = 0; i < m_pBullet.size(); i++)
 	{
-		
-			if (xposition+width<=m_pBullet[i]->GetPosition().x||xposition>m_pBullet[i]->GetPosition().x||yposition+heigth<m_pBullet[i]->GetPosition().y|| yposition>m_pBullet[i]->GetPosition().y)
-			{
-				//std::cout << xposition << "/" << xposition + width << std::endl;
-				//std::cout << yposition << "/" << yposition +heigth << std::endl;
-				//std::cout << m_pBullet[i]->GetPosition().x<<"/"<<m_pBullet[i]->GetPosition().y << std::endl;
-				delete m_pBullet[i];
-				m_pBullet.erase(m_pBullet.begin() + i);
-				--i;
-			}
+		if (xposition+width<=m_pBullet[i]->GetPosition().x||xposition>m_pBullet[i]->GetPosition().x||yposition+heigth<m_pBullet[i]->GetPosition().y|| yposition>m_pBullet[i]->GetPosition().y)
+		{
+			//std::cout << xposition << "/" << xposition + width << std::endl;
+			//std::cout << yposition << "/" << yposition +heigth << std::endl;
+			//std::cout << m_pBullet[i]->GetPosition().x<<"/"<<m_pBullet[i]->GetPosition().y << std::endl;
+			delete m_pBullet[i];
+			m_pBullet.erase(m_pBullet.begin() + i);
+			--i;
+		}
+		else if (utils::IsPointInRect(m_pBullet[i]->GetPosition(), Rectf{ factoryX,factoryY, factoryWidth,factoryHeight }))
+		{
+		//	std::cout << m_pBullet[i]->GetPosition().x<<"/"<< m_pBullet[i]->GetPosition().y << std::endl;
+		//	std::cout << factoryX <<"/"<< factoryY << std::endl;
+			//std::cout << factoryWidth <<"/"<< factoryHeight << std::endl;
+			delete m_pBullet[i];
+			m_pBullet.erase(m_pBullet.begin() + i);
+			--i;
+		}
 	}
 }
+
+void Player::DecreaseCooldownSpeed(float decrease)
+{
+	m_MaxTimeBetweenShot -= decrease;
+	decrease = 0;
+}
+
+void Player::SetIsShooting(bool isShooting)
+{
+	m_isShooting = isShooting;
+}
+
+void Player::Addhealth(int Health)
+{
+	m_health += Health;
+	m_updateHealth = true;
+	Health = 0;
+}
+
+
 
 
 bool Player::IsShot()
@@ -374,9 +374,11 @@ void Player::SetBulletDirection(Point2f BulletDirection)
 
 	if (!m_IsCooldownBetweenBullet) {
 		//m_pBullet[m_bulletId]->SetPosition(m_PlayerPosition)
-	
-		m_pBullet.push_back(new Bullet{ m_PlayerPosition });
-		std::cout << m_pBullet.size() << std::endl;
+		if (m_isShooting)
+		{
+			m_pBullet.push_back(new Bullet{ m_PlayerPosition });
+		}
+		//std::cout << m_pBullet.size() << std::endl;
 		for (int  i = 0; i < m_pBullet.size(); i++)
 		{
 			if (!m_pBullet[i]->GetIsTraveling())
@@ -431,7 +433,7 @@ Rectf Player::GetPlayerHitbox()
 	return m_hitbox;
 }
 
-std::vector<Bullet*> Player::GetBulletAmount()
+std::vector<Bullet*>& Player::GetBulletAmount()
 {
 	return m_pBullet;
 }

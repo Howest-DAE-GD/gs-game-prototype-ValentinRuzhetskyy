@@ -7,7 +7,7 @@ class Bullet;
 class enemies
 {
 public:
-	enemies(Point2f position);
+	enemies(Point2f position,float speed, int health, int cash);
 	void RayCast(const std::vector< std::vector<Point2f>>& AllVertices);
 	void IsPlayerCloseBy(Point2f playerPosition);
 	void Update( float elapsedsec);
@@ -15,7 +15,7 @@ public:
 	void setId(int Id);
 	void Display();
 	void Sethealth(int health);
-	void HitByBullet(std::vector<Bullet*> Bulletpositions);
+	void HitByBullet(std::vector<Bullet*>& Bulletpositions);
 	bool GetIsCollidedWithWall();
 	int GetCurrency();
 	int GetHealth();
@@ -40,7 +40,7 @@ private:
 	Point2f m_Enemypos;
 	int		m_Width{10};
 	int		m_Height{10};
-	float	m_Speed{ 3.25 };
+	float	m_Speed{ };
 	int		m_EnemyId;
 	int		m_health;
 	int		m_cash;
@@ -51,8 +51,12 @@ private:
 	Direction EnemyDirection;
 	bool	  m_IsPlayerCloseBy;
 	bool	  m_isCollidedWithWall;
+	bool	  m_isCollidedWithCeiling;
+	bool	  m_isCollidedWithLeftWall;
+	bool	  m_isCollidedWithRightWall;
+	bool	  m_isCollidedWithLowerGround;
 	bool	  m_isAlive;
-
+	bool	  m_isCollidedWithBullet{ false };
 	std::vector<Point2f>m_EnemyVertices{
 		Point2f{m_Enemypos.x,m_Enemypos.y},
 		Point2f{m_Enemypos.x + m_Width,m_Enemypos.y },

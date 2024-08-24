@@ -20,9 +20,13 @@ public:
 	void SetBulletDirection(Point2f BulletDirection);
 	void RemoveCash(int m_cash);
 	void AddPlutonium(int plutonium);
+	void RemovePlutonium(int plutonium);
 	void UpdateHitboxPostion();
 	void RayCast(const std::vector< std::vector<Point2f>>& AllVertices);
-	void ManageBullets( float xposition,  float yposition,  float width,  float heigth);
+	void ManageBullets( float xposition,  float yposition,  float width,  float heigth, float factoryX, float factoryY, float factoryWidth, float factoryHeight);
+	void DecreaseCooldownSpeed(float decrease);
+	void SetIsShooting(bool isShooting);
+	void Addhealth(int Health);
 	bool IsShot();
 	
 	bool GetIsDeath();
@@ -32,7 +36,7 @@ public:
 	Rectf	GetBulletHitbox();
 	Rectf	GetPlayerHitbox();
 
-	std::vector<Bullet*> GetBulletAmount();
+	std::vector<Bullet*>& GetBulletAmount();
 	int getBullets();
 	friend void PowerUps::PowerupMagazine(Player& Player);
 
@@ -84,6 +88,7 @@ private:
 	std::string m_xOperator;
 	std::string m_yOperator;
 
+	bool m_isShooting;
 	bool m_IsShot;
 	bool m_ChangesCash;
 	bool m_IsCooldownBetweenBullet;
@@ -96,7 +101,8 @@ private:
 	bool m_upBorderCollission;
 	float m_timer;
 	float m_seconds;
-	float  m_CooldownBetweenShot;
+	float  m_TimeBetweenShot;
+	float m_MaxTimeBetweenShot;
 	int m_health{5};
 	float m_Width;
 	float m_Heigth;

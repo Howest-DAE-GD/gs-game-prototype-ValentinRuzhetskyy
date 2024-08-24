@@ -6,6 +6,7 @@
 #include <vector>
 #include "RobotWorkPlace.h"
 #include "Player.h"
+#include "PowerUps.h"
 class Game : public BaseGame
 {
 public:
@@ -85,7 +86,8 @@ private:
 	//std::vector<Robot*>Robots{};
 
 	enemies* enemy;
-
+	PowerUps* PowerUp;
+	Point2f CurrentMousePosition;
 	int TotalAmountRobots{0};
 	int m_Amountworkplaces{0};
 	bool m_isExplosionReady{false};

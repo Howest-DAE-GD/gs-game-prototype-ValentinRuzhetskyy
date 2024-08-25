@@ -5,11 +5,12 @@
 
 
 class enemies;
+class Player;
 class RobotWorkPlace
 {
 public:
 	RobotWorkPlace(Point2f pos);
-	void CreateRobotWorkPlace(float left, float bottom, float width, float height,int rows, int collumns,const Point2f& pos,RobotWorkPlace* RobotWorkplaces[]);
+	void CreateRobotWorkPlace(float left, float bottom, float width, float height,int rows, int collumns,const Point2f& pos,RobotWorkPlace* RobotWorkplaces[],Player*& player);
 
 	void Update(const std::vector< std::vector<Point2f>>& AllVertices);
 	void SetEnemyCollision( std::vector<enemies*> AmountofEnemies);

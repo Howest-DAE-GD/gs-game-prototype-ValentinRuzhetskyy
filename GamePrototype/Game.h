@@ -32,7 +32,7 @@ public:
 	Point2f getRandomPoint2f(float x_min, float x_max, float y_min, float y_max);
 	float  getRandomFloat(float lower_bound, float upper_bound);
 	void CheckPlacement(const Point2f& pos);
-	void SpawnEnemies();
+	void SpawnEnemies(float elapsedSec);
 	int CreateRandomNumber(  int max);
 	void DrawExplosion() const;
 private:
@@ -43,9 +43,9 @@ private:
 
 
 	Point2f m_FactoryLocationOuterWall{GetViewPort().width/2,GetViewPort().height/2};
-	float	m_FactoryWidthOuterWall{300};
-	float	m_FactoryHeightOuterWall{300};
-	Point2f m_outerwallPosition{273.0f,100.0f};
+	float	m_FactoryWidthOuterWall{260};
+	float	m_FactoryHeightOuterWall{260};
+	Point2f m_outerwallPosition{283.0f,110.0f};
 	Point2f m_FactoryLocationCamp{ (GetViewPort().width / 2) ,(GetViewPort().height / 2) };
 	float	m_FactoryWidthCamp{ 240 };
 	float	m_FactorHeightCamp{ 240 };
@@ -86,17 +86,25 @@ private:
 	//std::vector<Robot*>Robots{};
 
 	enemies* enemy;
+
 	PowerUps* PowerUp;
-	Point2f CurrentMousePosition;
+
+
 	int TotalAmountRobots{0};
 	int m_Amountworkplaces{0};
-	bool m_isExplosionReady{false};
-	float timer{ 0 };
-	Player* Player1;
 	int id = AmountofEnemies.size();
+
+	float timer{ 0 };
+
+	Player* Player1;
+
 	Point2f rectfOffset{ 2,2 };
 	Point2f m_rectf1Position{400 ,250 };
 	Point2f m_rectf2Position{ 400 ,250 };
 	Point2f m_rectf3Position{ 400 ,250 };
 	Point2f m_rectf4Position{ 400 ,250 };
+	Point2f CurrentMousePosition;
+
+	bool m_isExplosionReady{ false };
+	bool m_isGamePaused{ false };
 };

@@ -15,7 +15,7 @@ public:
 	void setId(int Id);
 	void Display();
 	void Sethealth(int health);
-	void HitByBullet(std::vector<Bullet*>& Bulletpositions);
+	void HitByBullet(std::vector<Bullet*>& Bulletpositions, const int& damage);
 	bool GetIsCollidedWithWall();
 	int GetCurrency();
 	int GetHealth();
@@ -38,9 +38,9 @@ private:
 	};
 
 	Point2f m_Enemypos;
-	int		m_Width{10};
-	int		m_Height{10};
-	float	m_Speed{ };
+	int		m_Width{30};
+	int		m_Height{30};
+	float	m_Speed;
 	int		m_EnemyId;
 	int		m_health;
 	int		m_cash;

@@ -18,8 +18,8 @@ m_cash{ cash }
 {
 	m_RandomDirection = 2;
 
-	m_enemybounds.width = m_Width+10;
-	m_enemybounds.height = m_Height+10;
+	m_enemybounds.width = m_Width;
+	m_enemybounds.height = m_Height;
 }
 
 void enemies::RayCast(const std::vector<std::vector<Point2f>>& AllVertices)
@@ -150,10 +150,10 @@ void enemies::Update( float elapsedsec)
 	m_enemybounds.left = m_Enemypos.x;
 	m_enemybounds.bottom = m_Enemypos.y;
 //	std::cout << m_enemybounds.left << "/" << m_enemybounds.bottom << std::endl;
+	//m_Speed = elapsedsec;
+	//std::cout << m_Speed << std::endl;
 	if (this !=nullptr)
 	{
-
-
 		if (m_IsPlayerCloseBy == false)
 		{
 			if (m_counter >= 50)
@@ -350,13 +350,13 @@ void enemies::Sethealth(int health)
 
 }
 
-void enemies::HitByBullet(std::vector<Bullet*>& Bulletpositions)
+void enemies::HitByBullet(std::vector<Bullet*>& Bulletpositions, const int& damage)
 {
 	for (int i = 0; i < Bulletpositions.size(); i++)
 	{
 		if (utils::IsOverlapping(Bulletpositions[i]->GetHitbox(), m_enemybounds) )
 		{
-			m_health -= 1;
+			m_health -= damage;
 			delete Bulletpositions[i];
 			Bulletpositions.erase(Bulletpositions.begin() + i);
 			--i;

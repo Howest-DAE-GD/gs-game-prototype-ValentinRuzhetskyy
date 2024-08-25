@@ -7,6 +7,7 @@
 #include "PowerUps.h"
 
 
+
 class Bullet;
 class Player
 {
@@ -26,24 +27,34 @@ public:
 	void ManageBullets( float xposition,  float yposition,  float width,  float heigth, float factoryX, float factoryY, float factoryWidth, float factoryHeight);
 	void DecreaseCooldownSpeed(float decrease);
 	void SetIsShooting(bool isShooting);
+	void SetIsReleased(bool isReleased);
 	void Addhealth(int Health);
+	void UpgradeBullet(int damage);
+	void UpdateUnits();
+	void Collision();
+	void DrawYouDied();
+
+
 	bool IsShot();
-	
 	bool GetIsDeath();
+
 	Point2f GetBulletPosition();
 	Point2f GetPlayerPosition();
-	void Collision();
+
 	Rectf	GetBulletHitbox();
 	Rectf	GetPlayerHitbox();
 
 	std::vector<Bullet*>& GetBulletAmount();
 	int getBullets();
-	friend void PowerUps::PowerupMagazine(Player& Player);
-
-	friend void PowerUps::PowerupSpeed(Player& Player);
-	int GetCash();
-
 	int GetPlutonium();
+	int GetCash();
+	int GetBullletDamage();
+	float getCooldownSpeed();
+	friend void PowerUps::PowerupMagazine(Player& Player);
+	friend void PowerUps::PowerupSpeed(Player& Player);
+
+
+
 
 private:
 
@@ -67,17 +78,18 @@ private:
 	int m_bulletId;
 	int m_Cooldown;
 
-	std::string m_textpath{ "FaqroExtendedItalic-nAL5Y.ttf" };
+	std::string m_textpath{ "Inktype-MAp2J.ttf" };
 	std::string AmountOfCash;
 	std::string AmountOfPlutonium;
 	std::string m_CashWord{"cash"};
 	std::string m_PlutoniumWord{"plutonium"};
 	std::string m_HealthWord{ "Health" };
 	std::string AmountOfHealth;
-
+	std::string YouDied{ "You Died" };
 	Texture* m_PCashDisplay;
 	Texture* m_pPlutonium;
 	Texture* m_pHealth;
+	Texture* m_youDied;
 	Point2f m_Scoreposition;
 	Point2f m_Plutoniumposition;
 	Point2f m_PlayerPosition;
@@ -99,15 +111,21 @@ private:
 	bool m_leftBorderCollission;
 	bool m_downBorderCollission;
 	bool m_upBorderCollission;
+	bool m_IsReleased;
 	float m_timer;
 	float m_seconds;
 	float  m_TimeBetweenShot;
 	float m_MaxTimeBetweenShot;
-	int m_health{5};
+	float m_opacity{0};
+	int m_health{1};
+	int m_damage{ 1 };
 	float m_Width;
 	float m_Heigth;
 	Rectf m_hitbox;
 	utils::HitInfo m_hitInfo;
+	const wchar_t* filePath = L"Resources/YouDied.bmp";
+	HBITMAP hbitMap = (HBITMAP)LoadImage(NULL, filePath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
 };
 
 

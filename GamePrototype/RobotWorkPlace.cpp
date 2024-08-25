@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "RobotWorkPlace.h"
+#include "Player.h"
 
 RobotWorkPlace::RobotWorkPlace(Point2f pos) :
 	m_Position(pos),
@@ -12,10 +13,10 @@ RobotWorkPlace::RobotWorkPlace(Point2f pos) :
 	m_Plutonium{0},
 	m_plutoniumLimit{5}
 {
-	
+	std::cout << m_Position.x << "/" << m_Position.y << std::endl;
 }
 
-void RobotWorkPlace::CreateRobotWorkPlace(float left, float bottom, float width, float height, int Rows, int Collumns,const Point2f& pos, RobotWorkPlace* RobotWorkplaces[])
+void RobotWorkPlace::CreateRobotWorkPlace(float left, float bottom, float width, float height, int Rows, int Collumns,const Point2f& pos, RobotWorkPlace* RobotWorkplaces[] , Player*& player)
 {
 	const float cellW{ width / Collumns };
 	const float cellH{ height / Rows };
@@ -32,6 +33,7 @@ void RobotWorkPlace::CreateRobotWorkPlace(float left, float bottom, float width,
 	{
 		RobotWorkPlace* pRoboyWorkPlace{ new RobotWorkPlace(Point2f{x,y}) };
 		RobotWorkplaces[index] = pRoboyWorkPlace;
+		player->RemoveCash(RobotWorkPlace::m_BuildPrice);
 	}
 }
 

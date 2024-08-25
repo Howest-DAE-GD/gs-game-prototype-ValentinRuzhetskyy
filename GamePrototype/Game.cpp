@@ -16,13 +16,13 @@ Game::~Game( )
 
 void Game::Initialize( )
 {
-	Player1 = new Player{ Point2f{20.0f,460.0f}, Point2f{300.0f,200.0f}, Point2f{650.0f,460.0f },Point2f{320,460} };
+	Player1 = new Player{ Point2f{20.0f,460.0f}, Point2f{300.0f,200.0f}, Point2f{720.0f,460.0f },Point2f{375,460} };
 	PowerUp = new PowerUps{  };
-	for (int i = 0; i < AmountofEnemies.size(); i++)
-	{
-		AmountofEnemies[i] = new enemies{ getRandomPoint2f(20, 820,20 ,480), 3.25,1,10 };
-		AmountofEnemies[i]->setId(i);
-	};
+	//for (int i = 0; i < AmountofEnemies.size(); i++)
+	//{
+	//	//AmountofEnemies[i] = new enemies{ getRandomPoint2f(20, 820,20 ,480), ,1,10 };
+	//	//AmountofEnemies[i]->setId(i);
+	//};
 	std::cout << "-Welcome to Nuke Factory. To progress in the game you will need 2 resources cash and plutonium." << std::endl;
 	std::cout << "-The objective of the game is to obtain 40 plutonium while staying alive. Once 40 is obtained all enemies will die" << std::endl;
 	std::cout << "-Cash is obtained through killing enemies" << std::endl;
@@ -64,13 +64,14 @@ void Game::Cleanup( )
 void Game::Update( float elapsedSec )
 {
 	//std::cout << timer<<std::endl;
+
 	if (timer<3)
 	{
 		timer += elapsedSec;
 	}
 	else if (timer>3)
 	{
-		SpawnEnemies();
+		SpawnEnemies(elapsedSec);
 		timer = 0;
 	}
 
@@ -79,24 +80,28 @@ void Game::Update( float elapsedSec )
 		Player1->Update(elapsedSec);
 		Player1->RayCast(VerticesPlayer);
 	}
-	
-	if (!m_isExplosionReady)
+	Player1->UpdateUnits();
+	if (!m_isExplosionReady||!Player1->GetIsDeath())
 	{
 		for (int indexEnemies = 0; indexEnemies < AmountofEnemies.size(); indexEnemies++)
 		{
-			AmountofEnemies[indexEnemies]->Update(elapsedSec);
-			AmountofEnemies[indexEnemies]->SetEnemyVertices(m_EnemyVertices);
-			AmountofEnemies[indexEnemies]->RayCast(Vertices);
-			if (AmountofEnemies[indexEnemies]->GetIsCollidedWithWall() == false)
+			if (AmountofEnemies[indexEnemies] != nullptr)
 			{
-				AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition());
+				AmountofEnemies[indexEnemies]->Update(elapsedSec);
+				AmountofEnemies[indexEnemies]->SetEnemyVertices(m_EnemyVertices);
+				AmountofEnemies[indexEnemies]->RayCast(Vertices);
+				if (AmountofEnemies[indexEnemies]->GetIsCollidedWithWall() == false)
+				{
+					AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition());
+				}
+				AmountofEnemies[indexEnemies]->HitByBullet(Player1->GetBulletAmount(),Player1->GetBullletDamage());
+				if (utils::IsOverlapping(Player1->GetPlayerHitbox(), AmountofEnemies[indexEnemies]->GetHitbox()))
+				{
+					Player1->Collision();
+					DeleteEnemy(indexEnemies);
+				}
 			}
-			AmountofEnemies[indexEnemies]->HitByBullet(Player1->GetBulletAmount());
-			if ( utils::IsOverlapping( Player1->GetPlayerHitbox(), AmountofEnemies[indexEnemies]->GetHitbox()))
-			{
-				Player1->Collision();
-				DeleteEnemy(indexEnemies);
-			}
+
 		}
 		for (int index = 0; index < AmountofEnemies.size(); index++)
 		{
@@ -111,22 +116,24 @@ void Game::Update( float elapsedSec )
 		AmountofEnemies.clear();
 	}
 
-	if (!m_isExplosionReady)
+	if (!m_isExplosionReady || !Player1->GetIsDeath())
 	{
 		for (int i = 0; i < 40; i++)
 		{
 			if (m_PworkPlaces[i] != nullptr)
 			{
-				m_PworkPlaces[i]->SetOuterWalls(m_outerwallPosition.x, m_outerwallPosition.y, m_FactoryWidthOuterWall, m_FactoryHeightOuterWall);
-				m_PworkPlaces[i]->Update(Vertices);
-				if (m_PworkPlaces[i]->IsPlutoniumReady())
+				if (!m_isGamePaused)
 				{
-					Player1->AddPlutonium(m_PworkPlaces[i]->GetReadyPlutonium());
+					m_PworkPlaces[i]->SetOuterWalls(m_outerwallPosition.x, m_outerwallPosition.y, m_FactoryWidthOuterWall, m_FactoryHeightOuterWall);
+					m_PworkPlaces[i]->Update(Vertices);
+					if (m_PworkPlaces[i]->IsPlutoniumReady())
+					{
+						Player1->AddPlutonium(m_PworkPlaces[i]->GetReadyPlutonium());
+					}
 				}
 			}
 		}
 	}
-
 
 	for (int i = 0; i < AmountofEnemies.size(); i++)
 	{
@@ -148,6 +155,10 @@ void Game::Update( float elapsedSec )
 	{
 		rectfOffset.x += 2;
 		rectfOffset.y += 2;
+	}
+	if (utils::IsPointInRect(Player1->GetPlayerPosition(),m_FactoryGround))
+	{
+		m_isGamePaused = true;
 	}
 	Player1->ManageBullets(0, 0, 846.f, 500.f,m_outerwallPosition.x,m_outerwallPosition.y, m_FactoryWidthOuterWall,m_FactoryHeightOuterWall);
 	Player1->SetBulletDirection(Point2f{ float(CurrentMousePosition.x),float(CurrentMousePosition.y) });
@@ -193,11 +204,11 @@ void Game::Draw( ) const
 			}
 		}
 	}
-	if (utils::IsPointInRect(  Player1->GetPlayerPosition(), Rectf{m_outerwallPosition.x,m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall}))
+	if (utils::IsPointInRect(  Player1->GetPlayerPosition(), m_FactoryGround))
 	{
 		PowerUp->Draw(Player1->GetPlutonium());
 	}
-	if (!Player1->GetIsDeath())	Player1->DisplayPlayer();
+	Player1->DisplayPlayer();
 
 	Player1->DisplayResources();
 	DrawExplosion();
@@ -277,16 +288,24 @@ void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
 	switch ( e.button )
 	{
 	case SDL_BUTTON_LEFT:
+		Player1->SetIsReleased(true);
 		for (int i = 0; i < Rows * Collumns; i++)
 		{
 			if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom && Player1->GetCash() >= 200)
 			{
-				Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
-				m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces);
+				//Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
+				m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces,Player1);
+
 			}
 			/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
+
+		}
+		if (utils::IsPointInRect(Player1->GetPlayerPosition(),m_FactoryGround))
+		{
 			PowerUp->BulletCooldownSpeedPressed(Point2f{ float(e.x),float(e.y) }, Player1);
 			PowerUp->ExtraHealthPressed(Point2f{ float(e.x),float(e.y) }, Player1);
+			PowerUp->BulletExtraDamage(Point2f{ float(e.x),float(e.y) }, Player1);
+			PowerUp->SetIsReleased(true);
 		}
 		Player1->SetIsShooting(false);
 
@@ -334,8 +353,8 @@ Point2f Game::getRandomPoint2f(float x_min, float x_max, float y_min, float y_ma
 	{
 		point.x = getRandomFloat(x_min, x_max);
 		point.y = getRandomFloat(y_min, y_max);
-	} while (utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x,m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall }));
-	if (!utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x,m_outerwallPosition.y,m_FactoryWidthOuterWall,m_FactoryHeightOuterWall }))
+	} while (utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x-25,m_outerwallPosition.y-25,m_FactoryWidthOuterWall+45,m_FactoryHeightOuterWall+45 }));
+	if (!utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x - 15,m_outerwallPosition.y - 15,m_FactoryWidthOuterWall + 30,m_FactoryHeightOuterWall + 30 }))
 	{
 		return point;
 	}
@@ -381,40 +400,38 @@ void Game::CheckPlacement(const Point2f& pos)
 	{
 		RobotWorkPlace* pRoboyWorkPlace{ new RobotWorkPlace(Point2f{x,y}) };
 		m_PworkPlaces[index] = pRoboyWorkPlace;
+
 	}
-	
 
 }
 
-void Game::SpawnEnemies()
+void Game::SpawnEnemies(float elapsedSec)
 {
 	if (Player1->GetPlutonium()<5)
 	{
-			enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480 ),3.25,1,10};
-			AmountofEnemies.push_back(NewEnemy);
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480 ),elapsedSec*90,1,10};
+		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if (Player1->GetPlutonium() >= 5&&  Player1->GetPlutonium()<10)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),3.25,3,15 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20  , 480),elapsedSec*125,3,15 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if (Player1->GetPlutonium()>=10&&Player1->GetPlutonium() < 20)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),3.55,4,25 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),elapsedSec * 145,4,25 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if ( Player1->GetPlutonium()>=20 && Player1->GetPlutonium() < 30)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),3.55,6,30 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),elapsedSec * 165,6,30 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if (Player1->GetPlutonium() >= 30 && Player1->GetPlutonium() <= 40)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),4,6,40 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),elapsedSec * 165,6,40 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
-
-
 }
 
 int Game::CreateRandomNumber( int max)

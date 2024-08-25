@@ -7,20 +7,22 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_PlayerPosition{ PlayerPostion },
 	m_Plutoniumposition{ PlutoniumPosition },
 	m_HealthPostion{ HealthPosition },
-	m_Cash{ 200 },
-	m_Size{ 15 },
+	m_Cash{ 2000 },
+	m_Size{ 20 },
 	m_Speed{ 5 },
+	m_health{ 5 },
 	m_IsShot{ false },
 	m_timer{ 0 },
 	m_seconds{ 0 },
 	m_ChangesCash{ false },
-	m_Plutonium{ 5 },
+	m_Plutonium{ 0 },
 	m_TimeBetweenShot{ 0.5 },
 	m_MaxTimeBetweenShot{0.5},
 	m_IsCooldownBetweenBullet{false},
 	m_bulletId{1},
 	m_updateHealth{false},
-	m_isShooting{false}
+	m_isShooting{false},
+	m_IsReleased{false}
 {
 	AmountOfPlutonium = std::to_string(m_Plutonium) + " " + m_PlutoniumWord;
 	AmountOfCash = std::to_string(m_Cash) +" "+ m_CashWord;
@@ -28,9 +30,13 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_PCashDisplay = new Texture(AmountOfCash, m_textpath, m_Size, Color4f{1.0f,1.0f,1.0f,1.0f});
 	m_pPlutonium = new Texture(AmountOfPlutonium,m_textpath,m_Size,Color4f{1.0f,1.0f,1.0f,1.0f});
 	m_pHealth = new Texture(AmountOfHealth, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
+	m_youDied = new Texture(YouDied, m_textpath, 60, Color4f{ 1,0,0,1});
+	//hbitMap = (HBITMAP)LoadImage(NULL, filePath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
 //	m_pBullet.push_back(new Bullet{ PlayerPostion });
 	//m_pBullet.push_back(new Bullet{ PlayerPostion });
 	//m_pBullet.push_back(new Bullet{ PlayerPostion });
+
 	m_hitbox.width  = 10;
 	m_hitbox.height = 10;
 	m_Heigth = 10;
@@ -50,18 +56,24 @@ void Player::DisplayResources()
 
 void Player::DisplayPlayer()
 {
+
 	utils::SetColor(Color4f{ 0.0f,1.0f,0.0f,1.0 });
 	utils::FillRect(m_PlayerPosition.x, m_PlayerPosition.y, 10.0f, 10.0f);
-
+	
 	for (int i = 0; i < m_pBullet.size(); i++)
 	{
 		m_pBullet[i]->Display();
+	}
+	if (m_isDeath)
+	{
+		DrawYouDied();
 	}
 }
 
 void Player::Update(float elapsedSec)
 {
-
+	//hbitMap = (HBITMAP)LoadImage(NULL, filePath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	m_Speed = 300 * elapsedSec;
 	const Uint8* pStates{};
 
 	pStates = SDL_GetKeyboardState(nullptr);
@@ -140,7 +152,6 @@ void Player::Update(float elapsedSec)
 
 	if (m_IsShot)
 	{
-
 		if (m_timer > 2)
 		{
 			m_seconds += 1;
@@ -181,30 +192,7 @@ void Player::Update(float elapsedSec)
 		}
 	}
 
-	if (m_ChangesCash)
-	{
-		AmountOfCash =  std::to_string(m_Cash)+ m_CashWord;
-		delete  m_PCashDisplay;
-		m_PCashDisplay = nullptr;
-		m_PCashDisplay = new Texture(AmountOfCash, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
-		m_ChangesCash = false;
-	}
-	if (m_ChangesPlutonium)
-	{
-		AmountOfPlutonium = std::to_string(m_Plutonium) + m_PlutoniumWord;
-		delete  m_pPlutonium;
-		m_pPlutonium = nullptr;
-		m_pPlutonium = new Texture(AmountOfPlutonium, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
-		m_ChangesPlutonium = false;
-	}
-	if (m_updateHealth)
-	{
-		AmountOfHealth = std::to_string(m_health) + " " + m_HealthWord;
-		delete m_pHealth;
-		m_pHealth = nullptr;
-		m_pHealth = new Texture(AmountOfHealth, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
-		m_updateHealth = false;
-	}
+
 	UpdateHitboxPostion();	
 	//std::cout << m_health << std::endl;
 }
@@ -214,6 +202,16 @@ int Player::GetCash()
 	return m_Cash;
 }
 
+int Player::GetBullletDamage()
+{
+	return m_damage;
+}
+
+float Player::getCooldownSpeed()
+{
+	return m_MaxTimeBetweenShot;
+}
+
 int Player::GetPlutonium()
 {
 	return m_Plutonium;
@@ -221,8 +219,12 @@ int Player::GetPlutonium()
 
 void Player::RemoveCash(int m_cash)
 {
-	m_Cash -= m_cash;
-	m_ChangesCash = true;
+	if (m_IsReleased)
+	{
+		m_Cash -= m_cash;
+		m_ChangesCash = true;
+		m_IsReleased = false;
+	}
 }
 
 void Player::AddPlutonium(int plutonium)
@@ -323,11 +325,49 @@ void Player::SetIsShooting(bool isShooting)
 	m_isShooting = isShooting;
 }
 
+void Player::SetIsReleased(bool isReleased)
+{
+	m_IsReleased = isReleased;
+}
+
 void Player::Addhealth(int Health)
 {
 	m_health += Health;
 	m_updateHealth = true;
 	Health = 0;
+}
+
+void Player::UpgradeBullet(int damage)
+{
+	m_damage += damage;
+}
+
+void Player::UpdateUnits()
+{
+	if (m_ChangesCash)
+	{
+		AmountOfCash = std::to_string(m_Cash) + " " + m_CashWord;
+		delete  m_PCashDisplay;
+		m_PCashDisplay = nullptr;
+		m_PCashDisplay = new Texture(AmountOfCash, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
+		m_ChangesCash = false;
+	}
+	if (m_ChangesPlutonium)
+	{
+		AmountOfPlutonium = std::to_string(m_Plutonium) + " " + m_PlutoniumWord;
+		delete  m_pPlutonium;
+		m_pPlutonium = nullptr;
+		m_pPlutonium = new Texture(AmountOfPlutonium, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
+		m_ChangesPlutonium = false;
+	}
+	if (m_updateHealth)
+	{
+		AmountOfHealth = std::to_string(m_health) + " " + m_HealthWord;
+		delete m_pHealth;
+		m_pHealth = nullptr;
+		m_pHealth = new Texture(AmountOfHealth, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
+		m_updateHealth = false;
+	}
 }
 
 
@@ -370,8 +410,6 @@ void Player::SetBulletDirection(Point2f BulletDirection)
 	//	}
 
 	//}
-
-
 	if (!m_IsCooldownBetweenBullet) {
 		//m_pBullet[m_bulletId]->SetPosition(m_PlayerPosition)
 		if (m_isShooting)
@@ -394,9 +432,9 @@ void Player::SetBulletDirection(Point2f BulletDirection)
 
 void Player::Addcash(int cash)
 {
-	m_Cash += cash;
-	m_ChangesCash=true;
 
+	m_Cash += cash;
+	m_ChangesCash = true;
 }
 
 Point2f Player::GetPlayerPosition()
@@ -418,6 +456,20 @@ void Player::Collision()
 		m_isDeath = true;
 	}
 
+}
+
+void Player::DrawYouDied()
+{
+	utils::SetColor(Color4f{ 0,0,0,m_opacity });
+	utils::FillRect(Rectf{ 0,0,850.5,500 });
+	if (m_opacity<1)
+	{
+		m_opacity+=0.05;
+	}
+	else if (m_opacity>=1)
+	{
+		m_youDied->Draw(Point2f{ 310,250 });
+	}
 }
 
 Rectf Player::GetBulletHitbox()

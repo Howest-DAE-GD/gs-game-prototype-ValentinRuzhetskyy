@@ -5,7 +5,7 @@
 class Bullet
 {
 public:
-	Bullet(Point2f Position);
+	Bullet(Point2f Position,int travelspeed);
 	~Bullet();
 	void Display();
 	void SetPosition(Point2f& RobotPosition);

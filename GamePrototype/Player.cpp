@@ -7,7 +7,7 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_PlayerPosition{ PlayerPostion },
 	m_Plutoniumposition{ PlutoniumPosition },
 	m_HealthPostion{ HealthPosition },
-	m_Cash{ 2000 },
+	m_Cash{ 200 },
 	m_Size{ 20 },
 	m_Speed{ 5 },
 	m_health{ 5 },
@@ -15,7 +15,7 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_timer{ 0 },
 	m_seconds{ 0 },
 	m_ChangesCash{ false },
-	m_Plutonium{ 0 },
+	m_Plutonium{ 39},
 	m_TimeBetweenShot{ 0.5 },
 	m_MaxTimeBetweenShot{0.5},
 	m_IsCooldownBetweenBullet{false},
@@ -27,16 +27,13 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	AmountOfPlutonium = std::to_string(m_Plutonium) + " " + m_PlutoniumWord;
 	AmountOfCash = std::to_string(m_Cash) +" "+ m_CashWord;
 	AmountOfHealth = std::to_string(m_health) +" "+ m_HealthWord;
-	m_PCashDisplay = new Texture(AmountOfCash, m_textpath, m_Size, Color4f{1.0f,1.0f,1.0f,1.0f});
-	m_pPlutonium = new Texture(AmountOfPlutonium,m_textpath,m_Size,Color4f{1.0f,1.0f,1.0f,1.0f});
-	m_pHealth = new Texture(AmountOfHealth, m_textpath, m_Size, Color4f{ 1.0f,1.0f,1.0f,1.0f });
-	m_youDied = new Texture(YouDied, m_textpath, 60, Color4f{ 1,0,0,1});
-	//hbitMap = (HBITMAP)LoadImage(NULL, filePath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	m_PCashDisplay = new Texture(AmountOfCash, m_textpath, m_Size, Color4f{1,1,1,1});
+	m_pPlutonium = new Texture(AmountOfPlutonium,m_textpath,m_Size,Color4f{1,1,1,1});
+	m_pHealth = new Texture(AmountOfHealth, m_textpath, m_Size, Color4f{ 1,1,1,1 });
+	m_youDied = new Texture(YouDiedText, m_textpath, 60, Color4f{ 1,0,0,1});
+	m_youWon = new Texture(youWonText, m_textpath, 60, Color4f{ 0.5,0.5,0,1 });
 
-//	m_pBullet.push_back(new Bullet{ PlayerPostion });
-	//m_pBullet.push_back(new Bullet{ PlayerPostion });
-	//m_pBullet.push_back(new Bullet{ PlayerPostion });
-
+	m_bulletTravelSpeed = 8;
 	m_hitbox.width  = 10;
 	m_hitbox.height = 10;
 	m_Heigth = 10;
@@ -54,7 +51,7 @@ void Player::DisplayResources()
 	m_pPlutonium->Draw(m_Plutoniumposition);
 }
 
-void Player::DisplayPlayer()
+void Player::DisplayPlayer(const bool& Winner, const float& explosioncounter)
 {
 
 	utils::SetColor(Color4f{ 0.0f,1.0f,0.0f,1.0 });
@@ -68,18 +65,23 @@ void Player::DisplayPlayer()
 	{
 		DrawYouDied();
 	}
+	if (Winner && explosioncounter >= 4)
+	{
+		DrawYouWon();
+	}
+
 }
 
 void Player::Update(float elapsedSec)
 {
 	//hbitMap = (HBITMAP)LoadImage(NULL, filePath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-	m_Speed = 300 * elapsedSec;
+	m_Speed = 350 * elapsedSec;
 	const Uint8* pStates{};
 
 	pStates = SDL_GetKeyboardState(nullptr);
 	const bool isRight{ bool(pStates[SDL_SCANCODE_D])};
 	const bool isLeft { bool(pStates[SDL_SCANCODE_A]) };
-	const bool isUp   { bool(pStates[SDL_SCANCODE_W])	 };
+	const bool isUp   { bool(pStates[SDL_SCANCODE_W]) };
 	const bool isDown { bool(pStates[SDL_SCANCODE_S]) };
 
 
@@ -104,8 +106,6 @@ void Player::Update(float elapsedSec)
 		{
 			m_PlayerPosition.y -= m_Speed;
 		}
-	
-		
 	}
 	else if (isLeft && isUp && !m_leftBorderCollission|| isLeft && isUp && !m_upBorderCollission)
 	{
@@ -117,8 +117,6 @@ void Player::Update(float elapsedSec)
 		{
 			m_PlayerPosition.x -= m_Speed;
 		}
-
-
 	}
 	else if (isLeft && isDown && !m_leftBorderCollission|| isLeft && isDown && !m_downBorderCollission)
 	{
@@ -183,7 +181,6 @@ void Player::Update(float elapsedSec)
 		{
 		//	std::cout << "goes thru here" << std::endl;
 			m_TimeBetweenShot += elapsedSec;
-	
 		}
 		else if (m_TimeBetweenShot>= m_MaxTimeBetweenShot)
 		{
@@ -191,8 +188,6 @@ void Player::Update(float elapsedSec)
 			m_TimeBetweenShot = 0;
 		}
 	}
-
-
 	UpdateHitboxPostion();	
 	//std::cout << m_health << std::endl;
 }
@@ -237,6 +232,21 @@ void Player::RemovePlutonium(int plutonium)
 {
 	m_Plutonium -= plutonium;
 	m_ChangesPlutonium = true;
+}
+
+void Player::DrawYouWon()
+{
+	utils::SetColor(Color4f{ 0,0,0,m_opacity });
+	utils::FillRect(Rectf{ 0,0,850.5,500 });
+	if (m_opacity < 1)
+	{
+		m_opacity += 0.05;
+	}
+	else if (m_opacity >= 1)
+	{
+		m_youWon->Draw(Point2f{ 230,225 });
+	}
+
 }
 
 void Player::UpdateHitboxPostion()
@@ -342,6 +352,11 @@ void Player::UpgradeBullet(int damage)
 	m_damage += damage;
 }
 
+void Player::UpgradeBulletSpeed(int speedIncrease)
+{
+	m_bulletTravelSpeed += speedIncrease;
+}
+
 void Player::UpdateUnits()
 {
 	if (m_ChangesCash)
@@ -414,7 +429,7 @@ void Player::SetBulletDirection(Point2f BulletDirection)
 		//m_pBullet[m_bulletId]->SetPosition(m_PlayerPosition)
 		if (m_isShooting)
 		{
-			m_pBullet.push_back(new Bullet{ m_PlayerPosition });
+			m_pBullet.push_back(new Bullet{ m_PlayerPosition, m_bulletTravelSpeed });
 		}
 		//std::cout << m_pBullet.size() << std::endl;
 		for (int  i = 0; i < m_pBullet.size(); i++)

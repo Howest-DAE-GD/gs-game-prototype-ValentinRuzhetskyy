@@ -17,7 +17,7 @@ Robot::Robot(Point2f Position) :
 	m_bulletCooldown{ 0 },
 	m_damage(1)
 {
-	m_pBullet = new Bullet{ m_RobotPosition };
+	//m_pBullet = new Bullet{ m_RobotPosition };
 }
 
 Robot::~Robot()

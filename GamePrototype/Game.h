@@ -95,16 +95,21 @@ private:
 	int id = AmountofEnemies.size();
 
 	float timer{ 0 };
+	float explossionCounter{ 0 };
 
 	Player* Player1;
 
 	Point2f rectfOffset{ 2,2 };
-	Point2f m_rectf1Position{400 ,250 };
-	Point2f m_rectf2Position{ 400 ,250 };
-	Point2f m_rectf3Position{ 400 ,250 };
-	Point2f m_rectf4Position{ 400 ,250 };
+	Point2f m_rectf1Position{350 ,225};
+	Point2f m_rectf2Position{ 350 ,225 };
+	Point2f m_rectf3Position{ 350 ,225 };
+	Point2f m_rectf4Position{ 350 ,225 };
+	Point2f m_rectf5Position{ 350 ,225 };
+	Point2f m_rectf6Position{ 350 ,225 };
+	Point2f m_rectf7Position{ 350 ,225 };
+	Point2f m_rectf8Position{ 350 ,225 };
 	Point2f CurrentMousePosition;
-
+	bool m_enemyOutOfRange{ false };
 	bool m_isExplosionReady{ false };
-	bool m_isGamePaused{ false };
+	bool m_isPlayerWithinWalls{ false };
 };

@@ -7,9 +7,9 @@ class Bullet;
 class enemies
 {
 public:
-	enemies(Point2f position,float speed, int health, int cash);
+	enemies(Point2f position, int health, int cash, int id,float saturation);
 	void RayCast(const std::vector< std::vector<Point2f>>& AllVertices);
-	void IsPlayerCloseBy(Point2f playerPosition);
+	void IsPlayerCloseBy(Point2f playerPosition, const bool& isplayerWithinWalls);
 	void Update( float elapsedsec);
 	void SetPosition(Point2f newPosition);
 	void setId(int Id);
@@ -36,19 +36,23 @@ private:
 		RightUp,
 		RightDown
 	};
-
+	float	m_Speed;
+	float	m_saturation;
 	Point2f m_Enemypos;
+
 	int		m_Width{30};
 	int		m_Height{30};
-	float	m_Speed;
 	int		m_EnemyId;
 	int		m_health;
 	int		m_cash;
 	int		m_counter;
+	int		m_id;
+	int		m_RandomDirection;
+
 	utils::HitInfo m_hitInfo;
 	
-	int		  m_RandomDirection;
 	Direction EnemyDirection;
+
 	bool	  m_IsPlayerCloseBy;
 	bool	  m_isCollidedWithWall;
 	bool	  m_isCollidedWithCeiling;

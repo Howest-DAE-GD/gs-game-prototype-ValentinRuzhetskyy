@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "Bullet.h"
 
-Bullet::Bullet(Point2f Position)
+Bullet::Bullet(Point2f Position, int travelspeed)
 	:m_bulletPosition(Position),
 	m_Width(5.0f),
 	m_height(5.0f),
 	m_TravelTime{0},
-	m_TravelSpeed{8},
+	m_TravelSpeed{travelspeed},
 	m_IsbulletTravelling{false}
 {
 	m_Hitbox.width = 5;

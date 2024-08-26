@@ -30,6 +30,8 @@ void Game::Initialize( )
 	std::cout << "-1 factory can make 5 plutonium" << std::endl;
 	std::cout << "-These can be placeed on the grid in the middle" << std::endl;
 	std::cout << "-When entering the grid you will aslo get the option to get upgrades which makes you stronger" << std::endl;
+	std::cout << "-Enemies strength are based on the saturation of the color. The darker the enemy the stronger the enemy." << std::endl;
+	std::cout << "-All upgrades cost 5 plutonium" << std::endl;
 	std::cout << " " << std::endl;
 	std::cout << "Left mousebutton pressed down: shooting" << std::endl;
 	std::cout << "Left mouseButton Released: Factory placed/upgrade chosen" << std::endl;
@@ -37,6 +39,7 @@ void Game::Initialize( )
 	std::cout << "D: Moving right"<< std::endl;
 	std::cout << "S: Moving Down"<< std::endl;
 	std::cout << "W: Moving Up"	<< std::endl;
+	
 	//std::cout<<""
 
 }
@@ -64,24 +67,28 @@ void Game::Cleanup( )
 void Game::Update( float elapsedSec )
 {
 	//std::cout << timer<<std::endl;
-
-	if (timer<3)
+	if (AmountofEnemies.size()<10)
 	{
-		timer += elapsedSec;
+		if (timer < 0.5)
+		{
+			timer += elapsedSec;
+		}
+		else if (timer > 0.5)
+		{
+			SpawnEnemies(elapsedSec);
+			timer = 0;
+		}
 	}
-	else if (timer>3)
-	{
-		SpawnEnemies(elapsedSec);
-		timer = 0;
-	}
-
 	if (!Player1->GetIsDeath()) {
 		
 		Player1->Update(elapsedSec);
 		Player1->RayCast(VerticesPlayer);
+		Player1->ManageBullets(0, 0, 846.f, 500.f, m_outerwallPosition.x, m_outerwallPosition.y, m_FactoryWidthOuterWall, m_FactoryHeightOuterWall);
+		Player1->SetBulletDirection(Point2f{ float(CurrentMousePosition.x),float(CurrentMousePosition.y) });
 	}
+
 	Player1->UpdateUnits();
-	if (!m_isExplosionReady||!Player1->GetIsDeath())
+	if (!m_isExplosionReady&&!Player1->GetIsDeath())
 	{
 		for (int indexEnemies = 0; indexEnemies < AmountofEnemies.size(); indexEnemies++)
 		{
@@ -92,7 +99,7 @@ void Game::Update( float elapsedSec )
 				AmountofEnemies[indexEnemies]->RayCast(Vertices);
 				if (AmountofEnemies[indexEnemies]->GetIsCollidedWithWall() == false)
 				{
-					AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition());
+					AmountofEnemies[indexEnemies]->IsPlayerCloseBy(Player1->GetPlayerPosition(), m_isPlayerWithinWalls);
 				}
 				AmountofEnemies[indexEnemies]->HitByBullet(Player1->GetBulletAmount(),Player1->GetBullletDamage());
 				if (utils::IsOverlapping(Player1->GetPlayerHitbox(), AmountofEnemies[indexEnemies]->GetHitbox()))
@@ -111,18 +118,23 @@ void Game::Update( float elapsedSec )
 			}
 		}
 	}
-	else if (m_isExplosionReady)
+	else
 	{
 		AmountofEnemies.clear();
+		Player1->SetIsShooting(false);
+		if (explossionCounter<4)
+		{
+			explossionCounter += elapsedSec;
+		}
 	}
 
-	if (!m_isExplosionReady || !Player1->GetIsDeath())
+	if (!m_isExplosionReady && !Player1->GetIsDeath())
 	{
 		for (int i = 0; i < 40; i++)
 		{
 			if (m_PworkPlaces[i] != nullptr)
 			{
-				if (!m_isGamePaused)
+				if (!m_isPlayerWithinWalls)
 				{
 					m_PworkPlaces[i]->SetOuterWalls(m_outerwallPosition.x, m_outerwallPosition.y, m_FactoryWidthOuterWall, m_FactoryHeightOuterWall);
 					m_PworkPlaces[i]->Update(Vertices);
@@ -158,10 +170,13 @@ void Game::Update( float elapsedSec )
 	}
 	if (utils::IsPointInRect(Player1->GetPlayerPosition(),m_FactoryGround))
 	{
-		m_isGamePaused = true;
+		m_isPlayerWithinWalls = true;
 	}
-	Player1->ManageBullets(0, 0, 846.f, 500.f,m_outerwallPosition.x,m_outerwallPosition.y, m_FactoryWidthOuterWall,m_FactoryHeightOuterWall);
-	Player1->SetBulletDirection(Point2f{ float(CurrentMousePosition.x),float(CurrentMousePosition.y) });
+	else
+	{
+		m_isPlayerWithinWalls = false;
+	}
+
 }
 
 void Game::Draw( ) const
@@ -204,16 +219,14 @@ void Game::Draw( ) const
 			}
 		}
 	}
-	if (utils::IsPointInRect(  Player1->GetPlayerPosition(), m_FactoryGround))
+	if (utils::IsPointInRect(  Player1->GetPlayerPosition(), m_FactoryGround)&&!m_isExplosionReady)
 	{
 		PowerUp->Draw(Player1->GetPlutonium());
 	}
-	Player1->DisplayPlayer();
+	Player1->DisplayPlayer(m_isExplosionReady,explossionCounter);
 
 	Player1->DisplayResources();
 	DrawExplosion();
-
-
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -262,22 +275,23 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 	//	break;
 	//}
 //	std::cout << "left click" << std::endl;
-	if (!Player1->GetIsDeath())
-	{
+
 		switch (e.button)
 		{
 		default:
 			break;
 		case SDL_BUTTON_LEFT:
-
-			if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall || Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
+			if (!Player1->GetIsDeath() && !m_isExplosionReady)
 			{
+				if (Player1->GetPlayerPosition().x<m_outerwallPosition.x || Player1->GetPlayerPosition().x>m_outerwallPosition.x + m_FactoryWidthOuterWall || Player1->GetPlayerPosition().y<m_outerwallPosition.y || Player1->GetPlayerPosition().y>m_outerwallPosition.y + m_FactoryWidthOuterWall)
+				{
 					Player1->SetIsShooting(true);
+				}
 			}
 			//	std::cout << e.x << " " << (e.y) << std::endl;
 			break;
 		}
-	}
+	
 
 }
 
@@ -288,28 +302,31 @@ void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
 	switch ( e.button )
 	{
 	case SDL_BUTTON_LEFT:
-		Player1->SetIsReleased(true);
-		for (int i = 0; i < Rows * Collumns; i++)
+		if (!Player1->GetIsDeath()&&!m_isExplosionReady)
 		{
-			if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom && Player1->GetCash() >= 200)
+			Player1->SetIsReleased(true);
+			for (int i = 0; i < Rows * Collumns; i++)
 			{
-				//Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
-				m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces,Player1);
-
+				if (e.x <= m_FactoryGround.left + m_FactoryGround.width && e.x >= m_FactoryGround.left && e.y <= m_FactoryGround.bottom + m_FactoryGround.height && e.y >= m_FactoryGround.bottom && Player1->GetCash() >= 200)
+				{
+					//Player1->RemoveCash(RobotWorkPlace::m_BuildPrice);
+					m_PworkPlaces[i]->CreateRobotWorkPlace(m_FactoryGround.left, m_FactoryGround.bottom, m_FactoryGround.width, m_FactoryGround.height, Rows, Collumns, Point2f{ float(e.x), float(e.y) }, m_PworkPlaces, Player1);
+				}
+				/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
 			}
-			/*CheckPlacement(Point2f{float(e.x),float(e.y)}); */
+			if (utils::IsPointInRect(Player1->GetPlayerPosition(), m_FactoryGround))
+			{
+				PowerUp->BulletCooldownSpeedPressed(Point2f{ float(e.x),float(e.y) }, Player1);
+				PowerUp->ExtraHealthPressed(Point2f{ float(e.x),float(e.y) }, Player1);
+				PowerUp->BulletExtraDamage(Point2f{ float(e.x),float(e.y) }, Player1);
+				PowerUp->BulletExtraSpeed(Point2f{ float(e.x),float(e.y) }, Player1);
+				PowerUp->SetIsReleased(true);
+		
+			}
+			Player1->SetIsShooting(false);
 
+			m_Amountworkplaces += 1;
 		}
-		if (utils::IsPointInRect(Player1->GetPlayerPosition(),m_FactoryGround))
-		{
-			PowerUp->BulletCooldownSpeedPressed(Point2f{ float(e.x),float(e.y) }, Player1);
-			PowerUp->ExtraHealthPressed(Point2f{ float(e.x),float(e.y) }, Player1);
-			PowerUp->BulletExtraDamage(Point2f{ float(e.x),float(e.y) }, Player1);
-			PowerUp->SetIsReleased(true);
-		}
-		Player1->SetIsShooting(false);
-
-		m_Amountworkplaces += 1;
 		break;
 	//case SDL_BUTTON_RIGHT:
 	//	std::cout << " right button " << std::endl;
@@ -353,10 +370,12 @@ Point2f Game::getRandomPoint2f(float x_min, float x_max, float y_min, float y_ma
 	{
 		point.x = getRandomFloat(x_min, x_max);
 		point.y = getRandomFloat(y_min, y_max);
-	} while (utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x-25,m_outerwallPosition.y-25,m_FactoryWidthOuterWall+45,m_FactoryHeightOuterWall+45 }));
-	if (!utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x - 15,m_outerwallPosition.y - 15,m_FactoryWidthOuterWall + 30,m_FactoryHeightOuterWall + 30 }))
+	} while (utils::IsPointInRect(point, Rectf{ m_outerwallPosition.x - 25,m_outerwallPosition.y - 25,m_FactoryWidthOuterWall + 45,m_FactoryHeightOuterWall + 45 }) || utils::IsPointInRect(point, Rectf{ Player1->GetPlayerPosition().x - 40,Player1->GetPlayerPosition().y - 40,80,80 }));
+	m_enemyOutOfRange = true;
+	if (m_enemyOutOfRange)
 	{
 		return point;
+		m_enemyOutOfRange = false;
 	}
 
 }
@@ -375,11 +394,16 @@ void Game::DrawExplosion() const
 { 
 	if (m_isExplosionReady)
 	{
-		utils::SetColor(Color4f{ 0.5f,0.0f, 0.0f, 1.0f });
+		utils::SetColor(Color4f{ 0.5f,0.0f, 0.0f, 0.5f });
 		utils::FillRect( m_rectf1Position.x -rectfOffset.x, m_rectf1Position.y+rectfOffset.y,100, 100);
 		utils::FillRect( m_rectf2Position.x - rectfOffset.x, m_rectf2Position.y - rectfOffset.y,100, 100);
 		utils::FillRect( m_rectf3Position.x + rectfOffset.x, m_rectf3Position.y + rectfOffset.y, 100, 100);
 		utils::FillRect( m_rectf4Position.x + rectfOffset.x, m_rectf4Position.y - rectfOffset.y, 100, 100);
+		utils::SetColor(Color4f{ 0.0f,0.0f, 0.0f, 0.5f });
+		utils::FillRect(m_rectf5Position.x - rectfOffset.x, m_rectf5Position.y, 100, 100);
+		utils::FillRect(m_rectf6Position.x, m_rectf6Position.y - rectfOffset.y, 100, 100);
+		utils::FillRect(m_rectf7Position.x , m_rectf7Position.y + rectfOffset.y, 100, 100);
+		utils::FillRect(m_rectf8Position.x + rectfOffset.x, m_rectf8Position.y, 100, 100);
 	}
 }
 
@@ -409,27 +433,27 @@ void Game::SpawnEnemies(float elapsedSec)
 {
 	if (Player1->GetPlutonium()<5)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480 ),elapsedSec*90,1,10};
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(GetViewPort().left + 20,GetViewPort().width - 30 ,GetViewPort().bottom + 20 , GetViewPort().height - 30),1,10,0,1};
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if (Player1->GetPlutonium() >= 5&&  Player1->GetPlutonium()<10)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20  , 480),elapsedSec*125,3,15 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(GetViewPort().left + 20,GetViewPort().width - 30 ,GetViewPort().bottom + 20 , GetViewPort().height - 30),3,15,1,0.8 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if (Player1->GetPlutonium()>=10&&Player1->GetPlutonium() < 20)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),elapsedSec * 145,4,25 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(GetViewPort().left + 20,GetViewPort().width - 30 ,GetViewPort().bottom + 20 , GetViewPort().height - 30),4,25,2,0.7 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if ( Player1->GetPlutonium()>=20 && Player1->GetPlutonium() < 30)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),elapsedSec * 165,6,30 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(GetViewPort().left + 20,GetViewPort().width - 30 ,GetViewPort().bottom + 20 , GetViewPort().height - 30),5,30,3,0.5 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 	else if (Player1->GetPlutonium() >= 30 && Player1->GetPlutonium() <= 40)
 	{
-		enemies* NewEnemy = new enemies{ getRandomPoint2f(20,820 ,20 , 480),elapsedSec * 165,6,40 };
+		enemies* NewEnemy = new enemies{ getRandomPoint2f(GetViewPort().left+ 20,GetViewPort().width- 30 ,GetViewPort().bottom +20 , GetViewPort().height - 30),6,40,4,0.3 };
 		AmountofEnemies.push_back(NewEnemy);
 	}
 }

@@ -2,7 +2,7 @@
 #include "enemies.h"
 #include "Robot.h"
 #include "Bullet.h"
-enemies::enemies(Point2f Position, float speed, int health, int cash):
+enemies::enemies(Point2f Position, int health, int cash,int id, float saturation):
 m_Enemypos{ Position },
 m_counter{ 0 },
 m_IsPlayerCloseBy{false},
@@ -13,8 +13,9 @@ m_isCollidedWithRightWall{false},
 m_isCollidedWithLowerGround{false},
 m_health{ health },
 m_isAlive{true},
-m_Speed{ speed },
-m_cash{ cash }
+m_cash{ cash },
+m_id{id},
+m_saturation{saturation}
 {
 	m_RandomDirection = 2;
 
@@ -72,39 +73,12 @@ void enemies::RayCast(const std::vector<std::vector<Point2f>>& AllVertices)
 	
 }
 
-void enemies::IsPlayerCloseBy(Point2f PlayerPosition)
+void enemies::IsPlayerCloseBy(Point2f PlayerPosition, const bool& isplayerWithinWalls)
 {
 	if (this !=nullptr){
-
-	//	
-	//		if (Robots[indexRobots] != nullptr)
-	//		{
-	//			if (abs(Robots[indexRobots]->GetPosition().x - m_Enemypos.x) < 100.0f && abs(Robots[indexRobots]->GetPosition().y - m_Enemypos.y) < 100.0f)
-	//			{
-	//				//std::cout << "passing thru here" << std::endl;
-	//				m_IsRobotCloseBy = true;
-	//				if (Robots[indexRobots]->GetPosition().x > m_Enemypos.x)
-	//				{
-	//					m_Enemypos.x += m_Speed;
-	//				}
-	//				else if (Robots[indexRobots]->GetPosition().x < m_Enemypos.x)
-	//				{
-	//					m_Enemypos.x -= m_Speed;
-	//				}
-
-	//				if (Robots[indexRobots]->GetPosition().y > m_Enemypos.y)
-	//				{
-	//					m_Enemypos.y += m_Speed;
-	//				}
-	//				else if (Robots[indexRobots]->GetPosition().y < m_Enemypos.y)
-	//				{
-	//					m_Enemypos.y -= m_Speed;
-	//				}
-	//			}
-	//		}
-		if (!m_isCollidedWithWall)
+		if (!m_isCollidedWithWall&&!isplayerWithinWalls)
 		{
-			if (abs(PlayerPosition.x - m_Enemypos.x) < 100.0f && abs(PlayerPosition.y - m_Enemypos.y) < 100.0f)
+			if (abs(PlayerPosition.x - m_Enemypos.x) < 300 && abs(PlayerPosition.y - m_Enemypos.y) < 300)
 			{
 				m_IsPlayerCloseBy = true;
 				if (PlayerPosition.x > m_Enemypos.x) { 
@@ -140,8 +114,10 @@ void enemies::IsPlayerCloseBy(Point2f PlayerPosition)
 				m_IsPlayerCloseBy = false;
 			}
 		}
-
-
+		else
+		{
+			m_IsPlayerCloseBy = false;
+		}
 	}
 }
 
@@ -152,6 +128,31 @@ void enemies::Update( float elapsedsec)
 //	std::cout << m_enemybounds.left << "/" << m_enemybounds.bottom << std::endl;
 	//m_Speed = elapsedsec;
 	//std::cout << m_Speed << std::endl;
+	switch (m_id)
+	{
+	case 0:
+		//std::cout << "id 0" << std::endl;
+		m_Speed = elapsedsec * 125;
+		break;
+	case 1:
+		//std::cout << "id 1" << std::endl;
+		m_Speed = elapsedsec * 150;
+		break;
+	case 2:
+		//std::cout << "id 2" << std::endl;
+		m_Speed = elapsedsec * 170;
+		break;
+	case 3:
+		//std::cout << "id 3" << std::endl;
+		m_Speed = elapsedsec * 180;
+		break;
+	case 4:
+		//std::cout << "id 4" << std::endl;
+		m_Speed = elapsedsec * 180;
+		break;
+		default:
+		break;
+	}
 	if (this !=nullptr)
 	{
 		if (m_IsPlayerCloseBy == false)
@@ -323,16 +324,16 @@ void enemies::Display()
 {
 	if (this != nullptr)
 	{
-		utils::SetColor(Color4f{ 1.0f,0.0f,0.0f,1.0f });
-		utils::DrawRect(m_Enemypos.x, m_Enemypos.y, m_Width, m_Height);
-		utils::DrawLine(Point2f(m_Enemypos.x - 4, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y));
-		utils::DrawLine(Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width + 4, m_Enemypos.y));
-		utils::DrawLine(Point2f(m_Enemypos.x - 4, m_Enemypos.y + m_Height), Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y + m_Height));
-		utils::DrawLine(Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y + m_Height), Point2f(m_Enemypos.x + m_Width + 4, m_Enemypos.y + m_Height));
-		utils::DrawLine(Point2f(m_Enemypos.x, m_Enemypos.y - 4), Point2f(m_Enemypos.x, m_Enemypos.y + m_Height / 2));
-		utils::DrawLine(Point2f(m_Enemypos.x, m_Enemypos.y + m_Height / 2), Point2f(m_Enemypos.x, m_Enemypos.y + m_Height + 4));
-		utils::DrawLine(Point2f(m_Enemypos.x + m_Width, m_Enemypos.y - 4), Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height / 2));
-		utils::DrawLine(Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height / 2), Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height + 4));
+		utils::SetColor(Color4f{ m_saturation,0.0f,0.0f,1.0f });
+		utils::FillRect(m_Enemypos.x, m_Enemypos.y, m_Width, m_Height);
+		//utils::DrawLine(Point2f(m_Enemypos.x - 4, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y));
+		//utils::DrawLine(Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y), Point2f(m_Enemypos.x + m_Width + 4, m_Enemypos.y));
+		//utils::DrawLine(Point2f(m_Enemypos.x - 4, m_Enemypos.y + m_Height), Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y + m_Height));
+		//utils::DrawLine(Point2f(m_Enemypos.x + m_Width / 2, m_Enemypos.y + m_Height), Point2f(m_Enemypos.x + m_Width + 4, m_Enemypos.y + m_Height));
+		//utils::DrawLine(Point2f(m_Enemypos.x, m_Enemypos.y - 4), Point2f(m_Enemypos.x, m_Enemypos.y + m_Height / 2));
+		//utils::DrawLine(Point2f(m_Enemypos.x, m_Enemypos.y + m_Height / 2), Point2f(m_Enemypos.x, m_Enemypos.y + m_Height + 4));
+		//utils::DrawLine(Point2f(m_Enemypos.x + m_Width, m_Enemypos.y - 4), Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height / 2));
+		//utils::DrawLine(Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height / 2), Point2f(m_Enemypos.x + m_Width, m_Enemypos.y + m_Height + 4));
 	}
 }
 

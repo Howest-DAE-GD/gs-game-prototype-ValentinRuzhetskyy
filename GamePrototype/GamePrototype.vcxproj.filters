@@ -16,9 +16,6 @@
     <Filter Include="Source Files\MyClasses">
       <UniqueIdentifier>{0db86a8a-64bd-45ba-bab5-f32abe67ca57}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\MyClasses\Robot">
-      <UniqueIdentifier>{fd7cee08-5e0c-4e0f-9367-119af8daa4df}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\MyClasses\Player">
       <UniqueIdentifier>{76feed09-42d9-4c78-936f-88d61a4b5ecd}</UniqueIdentifier>
     </Filter>
@@ -35,9 +32,6 @@
     </ClCompile>
     <ClCompile Include="enemies.cpp">
       <Filter>Source Files\MyClasses</Filter>
-    </ClCompile>
-    <ClCompile Include="Robot.cpp">
-      <Filter>Source Files\MyClasses\Robot</Filter>
     </ClCompile>
     <ClCompile Include="Bullet.cpp">
       <Filter>Source Files\MyClasses\Player</Filter>
@@ -64,9 +58,6 @@
     </ClInclude>
     <ClInclude Include="enemies.h">
       <Filter>Source Files\MyClasses</Filter>
-    </ClInclude>
-    <ClInclude Include="Robot.h">
-      <Filter>Source Files\MyClasses\Robot</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
       <Filter>Source Files\MyClasses\Player</Filter>

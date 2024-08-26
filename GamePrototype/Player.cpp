@@ -15,7 +15,7 @@ Player::Player(Point2f ScorePosition, Point2f PlayerPostion, Point2f PlutoniumPo
 	m_timer{ 0 },
 	m_seconds{ 0 },
 	m_ChangesCash{ false },
-	m_Plutonium{ 39},
+	m_Plutonium{ 0},
 	m_TimeBetweenShot{ 0.5 },
 	m_MaxTimeBetweenShot{0.5},
 	m_IsCooldownBetweenBullet{false},
